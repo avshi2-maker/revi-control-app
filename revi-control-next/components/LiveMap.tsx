@@ -147,8 +147,35 @@ export default function LiveMap() {
     function seek(to: number) { simTime = clamp(to, 0, DUR); finished = simTime >= DUR; render(simTime); }
     function reset() { simTime = 0; finished = false; lastTs = null; setPlaying(true); buildPanel(); g("titlecard").classList.remove("hidden"); g("endcard").classList.add("hidden"); g("phase").classList.remove("show"); lastPhase = ""; render(0); }
 
+    // Weather widget (Open-Meteo, no API key needed)
+    const bearingToHe = (deg: number) => {
+      const dirs = ["צפון","צ-מ","מזרח","ד-מ","דרום","ד-מ","מערב","צ-מ"];
+      return dirs[Math.round(deg / 45) % 8];
+    };
+    (async () => {
+      try {
+        const r = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${GEO.center[0]}&longitude=${GEO.center[1]}&current=temperature_2m,windspeed_10m,winddirection_10m,relativehumidity_2m&windspeed_unit=ms&timezone=auto`
+        );
+        const d = await r.json();
+        const c = d.current;
+        const ws: number = c.windspeed_10m;
+        const temp = Math.round(c.temperature_2m);
+        const hum = Math.round(c.relativehumidity_2m);
+        const wdir = bearingToHe(c.winddirection_10m);
+        const ok = ws < 3 ? "✅ מתאים לריסוס" : ws < 6 ? "⚠️ רוח מתונה — זהירות" : "🚫 רוח חזקה — לא לרסס";
+        const col = ws < 3 ? "var(--good)" : ws < 6 ? "var(--warn)" : "var(--bad)";
+        const wEl = g("weather");
+        if (wEl) {
+          wEl.innerHTML = `<div class="w-row"><span>🌡 ${temp}°C</span><span>💧 ${hum}%</span></div><div class="w-row"><span>🌬 ${ws.toFixed(1)} מ/ש ${wdir}</span></div><div class="w-proto" style="color:${col}">${ok}</div>`;
+          wEl.classList.add("loaded");
+        }
+      } catch { /* silent */ }
+    })();
+
     const onReplay = () => reset();
     g("replay").addEventListener("click", onReplay);
+    g("endReplay").addEventListener("click", onReplay);
     let dragging = false;
     const scrubTo = (ev: any) => { const el = g("scrub"); const r = el.getBoundingClientRect(); const x = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left; seek((x / r.width) * DUR); };
     const onDown = (e: any) => { dragging = true; setPlaying(false); scrubTo(e); e.stopPropagation(); };
@@ -177,6 +204,7 @@ export default function LiveMap() {
     return () => {
       cancelAnimationFrame(raf);
       g("replay")?.removeEventListener("click", onReplay);
+      g("endReplay")?.removeEventListener("click", onReplay);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
       window.removeEventListener("resize", onResize);
@@ -191,7 +219,7 @@ export default function LiveMap() {
       <aside id="panel">
         <div className="p-head">
           <h2>מרכז שליטה — צי ריסוס אוטונומי</h2>
-          <div className="mission">משימה: ריסוס אזור ימי — חוף תל אביב</div>
+          <div className="mission">משימה: ריסוס פרדסים — עמק השרון</div>
           <div className="sub">
             <span>שטח יעד: <b>420 דונם</b></span>
             <span>רחפנים: <b>4</b></span>
@@ -225,7 +253,7 @@ export default function LiveMap() {
         <div className="overlay" id="titlecard">
           <div className="biglogo" />
           <h1>Revi-Control</h1>
-          <div className="tag">מרכז שליטה לצי ריסוס אוטונומי · חוף תל אביב</div>
+          <div className="tag">מרכז שליטה לצי ריסוס אוטונומי · עמק השרון</div>
           <div className="desc">תכנון, שיגור ובקרה של מספר רחפנים לכיסוי שטחים גדולים בזמן קצוב — על מפת לוויין חיה.</div>
         </div>
         <div className="overlay hidden" id="endcard">
@@ -238,6 +266,10 @@ export default function LiveMap() {
             <div className="stat"><div className="n">4</div><div className="c">רחפנים</div></div>
           </div>
           <div className="contact"><b>Revi-Control</b> · תוכנת מרכז השליטה · צרו קשר להדגמה</div>
+          <button className="endcard-btn" id="endReplay">
+            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z" /></svg>
+            הפעל שוב
+          </button>
         </div>
 
         <button id="replay" title="הפעל שוב">
@@ -245,6 +277,8 @@ export default function LiveMap() {
           הפעל שוב
         </button>
         <a className="navlink" href="/">← תצוגת סקיצה</a>
+        <a className="navlink navlink2" href="/select">← בחר רחפנים</a>
+        <div id="weather" />
         <div id="hint">רווח <b>=</b> השהה · <b>← →</b> דילוג · <b>R</b> מהתחלה · אפשר לגרור ולהתקרב במפה</div>
         <div id="scrub"><div className="track" /><div className="fill" /><div className="knob" /></div>
       </div>
