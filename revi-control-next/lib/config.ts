@@ -29,6 +29,15 @@ export const GEO = {
   zoom: 13,
 };
 
+// Ocean bacteria-spray mission — Mediterranean, launch from boat near Ashdod coast.
+// Boat sits at the east edge of the spray zone (coast side); zone extends west into open water.
+export const GEO_OCEAN = {
+  base: { lng: 34.580, lat: 31.840 }, // ⛵ boat launch point, Mediterranean off Ashdod
+  zone: { w: 34.380, e: 34.560, s: 31.740, n: 31.940 }, // ocean bacteria spray zone
+  center: [31.840, 34.470] as [number, number],
+  zoom: 11,
+};
+
 // Hebrew state labels.
 export const STATE_HE: Record<string, string> = {
   idle: "בהמתנה",
@@ -39,4 +48,6 @@ export const STATE_HE: Record<string, string> = {
   rejoin: "חוזר למשימה",
   rth: "נחיתה בבסיס",
   done: "הושלם",
+  // ocean-only state
+  splash: "נספה בים 💦",
 };
