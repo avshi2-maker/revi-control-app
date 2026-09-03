@@ -209,7 +209,7 @@ export default function LiveMap() {
         const d = drones[i];
 
         // ─── Ocean mode: track last spray position, freeze drones at splash point ───
-        let displayState = st.state;
+        let displayState: string = st.state;
         let displayPos: Pt = st.pos;
         let displayDrawn = st.drawn;
         if (ocean) {
