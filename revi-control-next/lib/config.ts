@@ -20,11 +20,12 @@ export const DUR = 61;
 // Drone D3 smart-cycle (return-to-base + refill) timings, inside the spray window.
 export const D3 = { low: 29, arrive: 32, refillEnd: 35, rejoin: 38 } as const;
 
-// Live map (map/page) geography — Tel Aviv coast. Replace with the real target area.
+// Live map geography — Sharon Valley agricultural area (orange/citrus orchards north of Tel Aviv).
+// Visible as green fields on Esri satellite. Change to any target area here.
 export const GEO = {
-  base: { lng: 34.768, lat: 32.094 }, // shoreline base
-  zone: { w: 34.701, e: 34.748, s: 32.06, n: 32.12 }, // sea target box
-  center: [32.092, 34.735] as [number, number],
+  base: { lng: 34.895, lat: 32.355 }, // farm depot near Netanya / Sharon Valley
+  zone: { w: 34.862, e: 34.935, s: 32.315, n: 32.392 }, // citrus grove spray zone
+  center: [32.353, 34.898] as [number, number],
   zoom: 13,
 };
 
