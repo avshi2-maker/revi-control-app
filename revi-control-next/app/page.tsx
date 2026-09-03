@@ -1,5 +1,5 @@
-import Teaser from "@/components/Teaser";
+import LiveMap from "@/components/LiveMap";
 
 export default function Page() {
-  return <Teaser />;
+    return <LiveMap />;
 }
