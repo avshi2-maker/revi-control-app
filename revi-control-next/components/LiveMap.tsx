@@ -15,8 +15,17 @@ export default function LiveMap() {
     if (RECORD) document.body.classList.add("record");
     const g = (id: string) => document.getElementById(id)!;
 
-    const base: Pt = [GEO.base.lng, GEO.base.lat];
-    const Z = GEO.zone;
+    // Which drones fly — comes from /select via ?drones=1,2,3 ; default D1-D4.
+    const rawSel = new URLSearchParams(location.search).get("drones");
+    let droneNums = rawSel
+      ? rawSel.split(",").map((s) => parseInt(s, 10)).filter((n) => Number.isFinite(n) && n > 0)
+      : [];
+    if (droneNums.length === 0) droneNums = [1, 2, 3, 4];
+    const N = droneNums.length;
+    const colorFor = (k: number) => COLORS[k] ?? `hsl(${(k * 47) % 360} 85% 62%)`;
+
+    let base: Pt = [GEO.base.lng, GEO.base.lat];
+    let Z = { ...GEO.zone }; // { w, e, s, n } — mutable so corners can reshape it
 
     const map = L.map("map", { zoomControl: true, attributionControl: true, preferCanvas: true }).setView(GEO.center, GEO.zoom);
     L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
@@ -25,30 +34,36 @@ export default function LiveMap() {
 
     // lanes (lng,lat)
     const drones: any[] = [];
-    const strips = 4, wspan = (Z.e - Z.w) / strips, padF = 0.06;
-    for (let i = 0; i < strips; i++) {
-      const a = Z.w + i * wspan + wspan * padF, b = Z.w + (i + 1) * wspan - wspan * padF;
-      const lane = boustro(a, b, Z.s + (Z.n - Z.s) * 0.04, Z.n - (Z.n - Z.s) * 0.04, 6, "x");
-      drones.push({ id: i, name: NAMES[i], color: COLORS[i], lane, heading: 0, _px: null, _py: null });
+    const padF = 0.06;
+    function buildLanes() {
+      const wspan = (Z.e - Z.w) / N;
+      for (let i = 0; i < N; i++) {
+        const a = Z.w + i * wspan + wspan * padF, b = Z.w + (i + 1) * wspan - wspan * padF;
+        const lane = boustro(a, b, Z.s + (Z.n - Z.s) * 0.04, Z.n - (Z.n - Z.s) * 0.04, 6, "x");
+        if (drones[i]) { drones[i].lane = lane; drones[i]._px = null; drones[i]._py = null; }
+        else drones.push({ id: i, name: "D" + droneNums[i], color: colorFor(i), lane, heading: 0, _px: null, _py: null });
+      }
     }
-    const sampleLane = (lane: Pt[], frac: number, N: number): [number, number][] => {
+    buildLanes();
+    const sampleLane = (lane: Pt[], frac: number, M: number): [number, number][] => {
       const out: [number, number][] = []; if (frac <= 0) return out;
-      for (let k = 0; k <= N; k++) { const pt = pointAt(lane, (frac * k) / N); out.push([pt[1], pt[0]]); }
+      for (let k = 0; k <= M; k++) { const pt = pointAt(lane, (frac * k) / M); out.push([pt[1], pt[0]]); }
       return out;
     };
 
     // layers
     const zoneRect = L.rectangle([[Z.s, Z.w], [Z.n, Z.e]], { color: "#22d3ee", weight: 2, dashArray: "9,7", fill: false }).addTo(map);
     const substrips: any[] = [], routeLines: any[] = [], trailOuter: any[] = [], trailInner: any[] = [], droneMarkers: any[] = [];
-    for (let i = 0; i < strips; i++) {
-      const a = Z.w + i * wspan, b = Z.w + (i + 1) * wspan;
-      substrips.push(L.rectangle([[Z.s, a], [Z.n, b]], { color: COLORS[i], weight: 1, opacity: 0, fillColor: COLORS[i], fillOpacity: 0 }).addTo(map));
-      routeLines.push(L.polyline([], { color: COLORS[i], weight: 1.5, opacity: 0, dashArray: "5,6" }).addTo(map));
+    const wspan0 = (Z.e - Z.w) / N;
+    for (let i = 0; i < N; i++) {
+      const a = Z.w + i * wspan0, b = Z.w + (i + 1) * wspan0;
+      substrips.push(L.rectangle([[Z.s, a], [Z.n, b]], { color: colorFor(i), weight: 1, opacity: 0, fillColor: colorFor(i), fillOpacity: 0 }).addTo(map));
+      routeLines.push(L.polyline([], { color: colorFor(i), weight: 1.5, opacity: 0, dashArray: "5,6" }).addTo(map));
       trailOuter.push(L.polyline([], { color: "#38e08a", weight: 16, opacity: 0.16, lineCap: "round", lineJoin: "round" }).addTo(map));
       trailInner.push(L.polyline([], { color: "#38e08a", weight: 8, opacity: 0.34, lineCap: "round", lineJoin: "round" }).addTo(map));
     }
-    const baseIcon = L.divIcon({ className: "", html: `<div class="base-ic"><div class="sq">H</div><div class="t">בסיס</div></div>`, iconSize: [40, 46], iconAnchor: [20, 15] });
-    L.marker([base[1], base[0]], { icon: baseIcon, interactive: false, zIndexOffset: 200 }).addTo(map);
+    const baseIcon = L.divIcon({ className: "", html: `<div class="base-ic"><div class="sq">H</div><div class="t">בסיס · גרור</div></div>`, iconSize: [40, 46], iconAnchor: [20, 15] });
+    const baseMarker = L.marker([base[1], base[0]], { icon: baseIcon, draggable: true, zIndexOffset: 200 }).addTo(map);
     for (const d of drones) {
       const html = `<div class="drone-ic" style="--dc:${d.color}"><div class="halo"></div><div class="ring"></div><div class="lbl">${d.name}</div>` +
         `<svg class="body" viewBox="-14 -14 28 28"><g>` +
@@ -58,6 +73,43 @@ export default function LiveMap() {
       const mk = L.marker([base[1], base[0]], { icon: L.divIcon({ className: "", html, iconSize: [26, 26], iconAnchor: [13, 13] }), interactive: false, zIndexOffset: 400 }).addTo(map);
       droneMarkers.push(mk);
     }
+
+    // draggable base + reshapeable zone corners + live coordinate readout
+    let lastMouse: { lat: number; lng: number } | null = null;
+    function updateCoordBox() {
+      const cb = document.getElementById("coordbox"); if (!cb) return;
+      const area = zoneAreaDunam();
+      cb.innerHTML =
+        `<div style="opacity:.7;margin-bottom:3px">קואורדינטות (WGS84)</div>` +
+        `<div><b style="color:#22d3ee">בסיס</b> ${base[1].toFixed(5)}, ${base[0].toFixed(5)}</div>` +
+        `<div><b style="color:#22d3ee">אזור</b> ${Z.s.toFixed(4)},${Z.w.toFixed(4)} ↔ ${Z.n.toFixed(4)},${Z.e.toFixed(4)}</div>` +
+        `<div><b style="color:#22d3ee">שטח</b> ~${area.toLocaleString()} דונם</div>` +
+        (lastMouse ? `<div style="opacity:.8"><b>עכבר</b> ${lastMouse.lat.toFixed(5)}, ${lastMouse.lng.toFixed(5)}</div>` : "");
+    }
+    function zoneAreaDunam() {
+      const midLat = ((Z.s + Z.n) / 2) * Math.PI / 180;
+      const h = (Z.n - Z.s) * 111320;
+      const w = (Z.e - Z.w) * 111320 * Math.cos(midLat);
+      return Math.max(0, Math.round((h * w) / 1000));
+    }
+    function relayout() {
+      const wspan = (Z.e - Z.w) / N;
+      for (let i = 0; i < N; i++) substrips[i].setBounds([[Z.s, Z.w + i * wspan], [Z.n, Z.w + (i + 1) * wspan]]);
+      zoneRect.setBounds([[Z.s, Z.w], [Z.n, Z.e]]);
+      buildLanes();
+    }
+    baseMarker.on("drag", (e: any) => { base = [e.latlng.lng, e.latlng.lat]; updateCoordBox(); });
+    const handleIcon = L.divIcon({ className: "", html: `<div style="width:16px;height:16px;border-radius:50%;background:#22d3ee;border:2px solid #06202e;box-shadow:0 0 8px #22d3ee;cursor:move"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] });
+    const swH = L.marker([Z.s, Z.w], { icon: handleIcon, draggable: true, zIndexOffset: 600 }).addTo(map);
+    const neH = L.marker([Z.n, Z.e], { icon: handleIcon, draggable: true, zIndexOffset: 600 }).addTo(map);
+    const onHandle = () => {
+      const sw = swH.getLatLng(), ne = neH.getLatLng();
+      Z = { w: Math.min(sw.lng, ne.lng), e: Math.max(sw.lng, ne.lng), s: Math.min(sw.lat, ne.lat), n: Math.max(sw.lat, ne.lat) };
+      relayout(); updateCoordBox();
+    };
+    swH.on("drag", onHandle); neH.on("drag", onHandle);
+    map.on("mousemove", (e: any) => { lastMouse = { lat: e.latlng.lat, lng: e.latlng.lng }; updateCoordBox(); });
+    updateCoordBox();
 
     // panel
     let cardEls: any[] = [], panelBuilt = false;
@@ -94,7 +146,7 @@ export default function LiveMap() {
         c.el.classList.toggle("alert", st.state === "rtb" || st.state === "refill" || st.state === "rejoin");
       }
       g("kCov").textContent = Math.round(agg.coverage * 100) + "%";
-      g("kActive").textContent = agg.active + "/4";
+      g("kActive").textContent = agg.active + "/" + N;
       g("kTime").textContent = fmtHM(Math.max(12, 120 - Math.round(agg.coverage * 108)));
       g("clock").textContent = fmtMS(s);
       g("fleetState").textContent = s < T.launch[0] ? "בהמתנה" : s < T.spray[1] ? "משימה פעילה" : s < T.rth[1] ? "חוזרים לבסיס" : "הושלם";
@@ -134,7 +186,7 @@ export default function LiveMap() {
         if (["takeoff", "spraying", "rtb", "rejoin", "rth"].includes(st.state)) active++;
       }
       zoneRect.setStyle({ opacity: ease(clamp((s - T.mapin[0]) / (T.mapin[1] - T.mapin[0]), 0, 1)) });
-      const agg = { coverage: clamp(covSum / drones.length, 0, 1), active: Math.min(4, active) };
+      const agg = { coverage: clamp(covSum / drones.length, 0, 1), active: Math.min(N, active) };
       updatePanel(s, states, agg); phase(s); overlays(s);
       const pct = clamp(s / DUR, 0, 1); scrubFill().style.width = pct * 100 + "%"; scrubKnob().style.left = pct * 100 + "%";
     }
@@ -279,7 +331,8 @@ export default function LiveMap() {
         <a className="navlink" href="/">← תצוגת סקיצה</a>
         <a className="navlink navlink2" href="/select">← בחר רחפנים</a>
         <div id="weather" />
-        <div id="hint">רווח <b>=</b> השהה · <b>← →</b> דילוג · <b>R</b> מהתחלה · אפשר לגרור ולהתקרב במפה</div>
+        <div id="coordbox" style={{ position: "absolute", left: 12, bottom: 74, zIndex: 700, background: "rgba(8,20,32,.85)", color: "#d6ecff", font: "12px/1.6 'Segoe UI', sans-serif", padding: "8px 11px", borderRadius: 10, border: "1px solid rgba(120,190,220,.28)", direction: "ltr", pointerEvents: "none", minWidth: 200, boxShadow: "0 6px 20px rgba(0,0,0,.35)" }} />
+        <div id="hint">רווח <b>=</b> השהה · <b>← →</b> דילוג · <b>R</b> מהתחלה · גרור את <b>הבסיס</b> ואת <b>פינות האזור</b></div>
         <div id="scrub"><div className="track" /><div className="fill" /><div className="knob" /></div>
       </div>
     </div>
