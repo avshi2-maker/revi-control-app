@@ -2,8 +2,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const MAX_SELECT = 4;
-
 // Deterministic drone fleet data (no random, always same layout)
 function droneData(n: number) {
   const isMaint = n % 9 === 0;                             // 9,18,27,36,45
@@ -15,6 +13,7 @@ function droneData(n: number) {
 }
 
 const FLEET = Array.from({ length: 50 }, (_, i) => droneData(i + 1));
+const AVAILABLE = FLEET.filter(d => !d.disabled).map(d => d.n); // all launch-ready drones
 
 export default function DroneSelector() {
   const [selected, setSelected] = useState<number[]>([]);
@@ -22,16 +21,17 @@ export default function DroneSelector() {
 
   const toggle = (n: number, disabled: boolean) => {
     if (disabled) return;
-    setSelected(prev => {
-      if (prev.includes(n)) return prev.filter(x => x !== n);
-      if (prev.length >= MAX_SELECT) return prev; // max 4
-      return [...prev, n];
-    });
+    setSelected(prev =>
+      prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n]
+    );
   };
+
+  const selectAll = () => setSelected(AVAILABLE);
+  const clearAll = () => setSelected([]);
 
   const launch = () => {
     if (selected.length === 0) return;
-    const q = selected.sort((a, b) => a - b).join(",");
+    const q = [...selected].sort((a, b) => a - b).join(",");
     router.push(`/map?drones=${q}`);
   };
 
@@ -41,10 +41,16 @@ export default function DroneSelector() {
         <div className="logo" />
         <div>
           <h1>בחר רחפנים למשימה</h1>
-          <p>ריסוס עמק השרון · עד 4 רחפנים פעילים בו-זמנית</p>
+          <p>ריסוס עמק השרון · בחר עד {AVAILABLE.length} רחפנים זמינים</p>
         </div>
         <div className="sel-count">
-          <span className="sel-badge">נבחרו {selected.length} / {MAX_SELECT}</span>
+          <span className="sel-badge">נבחרו {selected.length} / {AVAILABLE.length}</span>
+          <button className="sel-launch" style={{ background: "transparent", border: "1px solid rgba(120,190,220,.35)" }} onClick={selectAll}>
+            בחר הכל
+          </button>
+          <button className="sel-launch" style={{ background: "transparent", border: "1px solid rgba(120,190,220,.35)" }} disabled={selected.length === 0} onClick={clearAll}>
+            נקה
+          </button>
           <button className="sel-launch" disabled={selected.length === 0} onClick={launch}>
             ← צא למשימה
           </button>
