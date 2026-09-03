@@ -212,6 +212,7 @@ export default function Teaser() {
 
     const onReplay = () => reset();
     g("replay").addEventListener("click", onReplay);
+    g("endReplay").addEventListener("click", onReplay);
     let dragging = false;
     const scrubTo = (ev: any) => { const el = g("scrub"); const r = el.getBoundingClientRect(); const x = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left; seek((x / r.width) * DUR); };
     const onDown = (e: any) => { dragging = true; setPlaying(false); scrubTo(e); };
@@ -240,6 +241,7 @@ export default function Teaser() {
     return () => {
       cancelAnimationFrame(raf);
       g("replay")?.removeEventListener("click", onReplay);
+      g("endReplay")?.removeEventListener("click", onReplay);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
       window.removeEventListener("resize", onResize);
@@ -300,6 +302,10 @@ export default function Teaser() {
             <div className="stat"><div className="n">4</div><div className="c">רחפנים</div></div>
           </div>
           <div className="contact"><b>Revi-Control</b> · תוכנת מרכז השליטה · צרו קשר להדגמה</div>
+          <button className="endcard-btn" id="endReplay">
+            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z" /></svg>
+            הפעל שוב
+          </button>
         </div>
 
         <button id="replay" title="הפעל שוב">
@@ -307,6 +313,7 @@ export default function Teaser() {
           הפעל שוב
         </button>
         <a className="navlink" href="/map">מפה חיה ←</a>
+        <a className="navlink navlink2" href="/select">בחר רחפנים ←</a>
         <div id="hint">רווח <b>=</b> השהה · <b>← →</b> דילוג · <b>R</b> מהתחלה</div>
         <div id="scrub"><div className="track" /><div className="fill" /><div className="knob" /></div>
       </div>
