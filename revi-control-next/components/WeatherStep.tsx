@@ -21,6 +21,7 @@ export default function WeatherStep({
   const [advice, setAdvice] = useState<AdviceX | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(false);
+  const [obs, setObs] = useState<{ time: string; fetched: string } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -33,6 +34,8 @@ export default function WeatherStep({
         );
         const wd = await wr.json();
         const cur = wd.current;
+        const obsTime = (cur.time || "").replace("T", " ");
+        if (alive) setObs({ time: obsTime, fetched: new Date().toLocaleString("he-IL") });
         const ar = await fetch("/api/weather-advice", {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -77,6 +80,13 @@ export default function WeatherStep({
             <div className="wx-chip">🌡 <b>{advice.temp}</b>°C</div>
             <div className="wx-chip">💧 <b>{advice.humidity}</b>%</div>
           </div>
+
+          {obs && (
+            <div className="wx-source">
+              <span className="wx-live"><span className="wx-dot" /> זמן אמת</span>
+              עודכן: <b>{obs.time}</b> · מקור: <b>Open-Meteo</b> · נמשך: {obs.fetched}
+            </div>
+          )}
 
           <div className="wx-block">
             <h3>הערכת תנאים</h3>

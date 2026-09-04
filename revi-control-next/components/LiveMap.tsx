@@ -116,7 +116,7 @@ export default function LiveMap() {
     }
 
     // Wind + anti-drift crab overlay state
-    let windDeg = 0, windMps = 0, crabDeg = 0, showCrab = true;
+    let windDeg = 0, windMps = 0, crabDeg = 0, crabYaw = 0, showCrab = true;
     const windIcon = (deg: number, mps: number) =>
       L.divIcon({ className: "", html: `<div class="wind-arrow" style="transform:rotate(${deg}deg)"><span class="wa-shaft">↑</span></div><div class="wa-lbl">🌬 ${mps.toFixed(1)}</div>`, iconSize: [46, 60], iconAnchor: [23, 30] });
     const windMarker = L.marker([Z.n, (Z.w + Z.e) / 2], { icon: windIcon(0, 0), interactive: false, zIndexOffset: 300, opacity: 0 }).addTo(map);
@@ -368,7 +368,9 @@ export default function LiveMap() {
         const el = droneMarkers[i].getElement();
         if (el) {
           const ic = el.querySelector(".drone-ic"), body = el.querySelector(".body") as HTMLElement;
-          if (body) body.style.transform = `rotate(${d.heading + Math.PI / 2}rad)`;
+          // Add crab yaw while spraying so drones visibly angle into the wind.
+          const yaw = showCrab && st.spray && windMps >= 1 ? crabYaw : 0;
+          if (body) body.style.transform = `rotate(${d.heading + Math.PI / 2 + yaw}rad)`;
           if (ic) {
             ic.classList.toggle("spray", st.spray);
             ic.classList.toggle("warn", displayState === "rtb" || displayState === "rejoin");
@@ -445,6 +447,8 @@ export default function LiveMap() {
         // Feed the anti-drift crab overlay
         windDeg = c.winddirection_10m; windMps = ws;
         crabDeg = Math.round((Math.asin(Math.min(1, ws / 10)) * 180) / Math.PI);
+        // Screen-frame yaw: nose into the wind's E-W component while spraying (visual crab).
+        crabYaw = (crabDeg * Math.PI / 180) * (Math.sin((windDeg * Math.PI) / 180) >= 0 ? 1 : -1);
         drawCrab();
       } catch { /* silent */ }
     })();

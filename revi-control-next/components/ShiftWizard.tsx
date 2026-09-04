@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import type { Geo } from "@/components/ZonePicker";
 import WeatherStep from "@/components/WeatherStep";
+import WeightStep from "@/components/WeightStep";
 
 // Leaflet touches window at import — client only.
 const ZonePicker = dynamic(() => import("@/components/ZonePicker"), { ssr: false });
@@ -32,7 +33,7 @@ function avail(n: number) {
 }
 const FLEET = Array.from({ length: 50 }, (_, i) => avail(i + 1));
 
-const STEPS = ["תרחיש", "מזג אוויר", "רחפנים", "מפה + שיגור", "אישור", "אלגוריתם", "סיכום", "שיגור"];
+const STEPS = ["תרחיש", "מזג אוויר", "רחפנים", "משקל ואיזון", "מפה + שיגור", "אישור", "אלגוריתם", "סיכום", "שיגור"];
 
 const ALGOS: { id: Algo; he: string; desc: string }[] = [
   { id: "boustro", he: "מעברים מקבילים", desc: "כיסוי שורה-אחר-שורה (בוסטרופדון) — יעיל לשטח מלבני" },
@@ -50,6 +51,7 @@ export default function ShiftWizard() {
   const [eye, setEye] = useState<number | null>(null);
   const [geo, setGeo] = useState<Geo | null>(null);
   const [weatherOk, setWeatherOk] = useState(false);
+  const [weightOk, setWeightOk] = useState(true);
   const [permit, setPermit] = useState({ airspace: false, tank: false });
 
   const isOcean = scenario === "ocean";
@@ -76,11 +78,12 @@ export default function ShiftWizard() {
     true,               // 0 scenario
     weatherOk,          // 1 weather — must confirm/abort
     drones.length > 0,  // 2 drones
-    true,               // 3 map + pad
-    permitOk,           // 4 clearances
-    true,               // 5 algorithm
-    true,               // 6 summary
-    true,               // 7 launch
+    weightOk,           // 3 weight & balance — overweight blocks
+    true,               // 4 map + pad
+    permitOk,           // 5 clearances
+    true,               // 6 algorithm
+    true,               // 7 summary
+    true,               // 8 launch
   ][step];
 
   const launch = () => {
@@ -161,8 +164,11 @@ export default function ShiftWizard() {
           </div>
         )}
 
-        {/* 3 — Map + pad */}
-        {step === 3 && (
+        {/* 3 — Weight & balance */}
+        {step === 3 && <WeightStep onValid={setWeightOk} />}
+
+        {/* 4 — Map + pad */}
+        {step === 4 && (
           <div className="wz-pane">
             <h2>נקודת שיגור ואזור ריסוס</h2>
             <div className="wz-cards">
@@ -183,8 +189,8 @@ export default function ShiftWizard() {
           </div>
         )}
 
-        {/* 4 — Permission */}
-        {step === 4 && (
+        {/* 5 — Permission */}
+        {step === 5 && (
           <div className="wz-pane">
             <h2>אישורי שיגור</h2>
             <label className="wz-chk"><input type="checkbox" checked={permit.airspace} onChange={e => setPermit(p => ({ ...p, airspace: e.target.checked }))} /> המרחב האווירי פנוי ומאושר</label>
@@ -194,8 +200,8 @@ export default function ShiftWizard() {
           </div>
         )}
 
-        {/* 5 — Algorithm */}
-        {step === 5 && (
+        {/* 6 — Algorithm */}
+        {step === 6 && (
           <div className="wz-pane">
             <h2>אלגוריתם כיסוי</h2>
             <div className="wz-algos">
@@ -208,13 +214,14 @@ export default function ShiftWizard() {
           </div>
         )}
 
-        {/* 6 — Summary */}
-        {step === 6 && (
+        {/* 7 — Summary */}
+        {step === 7 && (
           <div className="wz-pane">
             <h2>סיכום משימה</h2>
             <div className="wz-sum">
               <div><span>סוג משימה</span><b>{isOcean ? "🌊 ריסוס בקטריאלי (ים)" : "🌿 ריסוס יבשתי"}</b></div>
               <div><span>מזג אוויר</span><b style={{ color: "var(--good)" }}>✓ אושר</b></div>
+              <div><span>משקל ואיזון</span><b style={{ color: "var(--good)" }}>✓ תקין</b></div>
               <div><span>נקודת שיגור</span><b>{pad === "boat" ? "⛵ ספינה" : "🏟 קרקע"}</b></div>
               <div><span>רחפנים</span><b>{drones.length} · {[...drones].sort((a, b) => a - b).map(n => "D" + n).join(", ") || "—"}</b></div>
               <div><span>רחפן צילום</span><b>{eye ? `📹 D${eye}` : "ללא"}</b></div>
@@ -225,8 +232,8 @@ export default function ShiftWizard() {
           </div>
         )}
 
-        {/* 7 — Launch */}
-        {step === 7 && (
+        {/* 8 — Launch */}
+        {step === 8 && (
           <div className="wz-pane wz-launch">
             <div className="wz-golauncher">
               <div className="wz-ico big">{isOcean ? "🌊" : "🌿"}</div>

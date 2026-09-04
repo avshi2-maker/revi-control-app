@@ -454,6 +454,10 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
 .wx-chip{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:7px 14px;
   font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums}
 .wx-chip b{color:var(--accent)}
+.wx-source{font-size:11.5px;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wx-source b{color:var(--ink)}
+.wx-live{display:inline-flex;align-items:center;gap:5px;color:var(--good);font-weight:700}
+.wx-dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 6px var(--good);animation:rec 1.4s steps(1) infinite}
 .wx-block{margin-bottom:16px}
 .wx-block h3{font-size:13px;font-weight:800;color:var(--muted);margin-bottom:9px}
 .wx-list{list-style:none;display:flex;flex-direction:column;gap:7px}
@@ -470,6 +474,35 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
 .wx-confirm{margin-top:6px}
 .wx-confirm.nogo{border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.08)}
 .wx-confirm.caution{border-color:rgba(245,158,11,.45)}
+
+/* ── Weight & balance step ── */
+.wt-controls{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.wt-slider-top{display:flex;justify-content:space-between;font-size:13.5px;font-weight:700;margin-bottom:8px}
+.wt-slider-top b{color:var(--accent)}
+.wt-slider input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+.wt-chk{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;margin-top:14px;cursor:pointer}
+.wt-chk input{width:17px;height:17px;accent-color:var(--accent);cursor:pointer}
+.wt-grid{display:flex;flex-direction:column;gap:1px;background:var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.wt-row{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);padding:12px 16px}
+.wt-row span{font-size:13.5px;color:var(--muted)}
+.wt-row b{font-size:15px;font-variant-numeric:tabular-nums}
+.wt-row.total{background:#0c1e2d}
+.wt-row.total span,.wt-row.total b{font-weight:800;font-size:15px;color:var(--ink)}
+.wt-row b.over{color:var(--bad)}
+.wt-gauge{margin-bottom:14px}
+.wt-gauge-bar{height:14px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);overflow:hidden}
+.wt-gauge-bar i{display:block;height:100%;background:var(--good);transition:width .25s,background .25s}
+.wt-gauge.warn .wt-gauge-bar i{background:var(--warn)}
+.wt-gauge.over .wt-gauge-bar i{background:var(--bad)}
+.wt-gauge-lbl{font-size:12px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
+.wt-alert{padding:12px 16px;border-radius:12px;font-size:14px;font-weight:700;margin-bottom:16px}
+.wt-alert.ok{color:var(--good);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.35)}
+.wt-alert.warn{color:var(--warn);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.35)}
+.wt-alert.over{color:var(--bad);background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.45)}
+.wt-balance{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.wt-cg{position:relative;width:120px;height:8px;border-radius:6px;background:var(--panel2);border:1px solid var(--line)}
+.wt-cg i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:var(--good);box-shadow:0 0 6px var(--good)}
+.wt-cg-note{color:var(--good);font-weight:700}
 
 /* ── Anti-drift crab overlay (live map) ── */
 .wind-arrow{width:34px;height:34px;margin:0 auto;display:flex;align-items:center;justify-content:center}

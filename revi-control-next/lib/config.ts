@@ -38,6 +38,17 @@ export const GEO_OCEAN = {
   zoom: 11,
 };
 
+// Drone hardware spec (demo manufacturer figures) for weight & balance checks.
+// 1 L of spray liquid ≈ 1 kg. MTOW = max takeoff weight = the warranty limit.
+export const DRONE_SPEC = {
+  model: "Revi-Spray X40",
+  dryKg: 38,          // empty weight incl. battery
+  maxPayloadKg: 40,   // manufacturer max payload
+  mtowKg: 90,         // max takeoff weight (warranty / safety limit)
+  tankMaxL: 45,       // spray tank capacity
+  sensorKitKg: 1.5,   // optional extra sensor package
+};
+
 // Ocean mission economics — expendable drones are a contracted, recognized cost.
 export const OCEAN_UNIT_COST = 4200; // ₪ per expendable drone lost at sea
 
