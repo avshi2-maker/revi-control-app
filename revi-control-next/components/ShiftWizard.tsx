@@ -46,6 +46,7 @@ export default function ShiftWizard() {
   const [pad, setPad] = useState<Pad>("ground");
   const [drones, setDrones] = useState<number[]>([]);
   const [algo, setAlgo] = useState<Algo>("boustro");
+  const [eye, setEye] = useState<number | null>(null);
   const [geo, setGeo] = useState<Geo | null>(null);
   const [permit, setPermit] = useState({ weather: false, airspace: false, tank: false });
 
@@ -59,7 +60,11 @@ export default function ShiftWizard() {
   };
   const toggleDrone = (n: number, ok: boolean) => {
     if (!ok) return;
-    setDrones(p => p.includes(n) ? p.filter(x => x !== n) : [...p, n]);
+    setDrones(p => {
+      const next = p.includes(n) ? p.filter(x => x !== n) : [...p, n];
+      if (!next.includes(n) && eye === n) setEye(null); // deselecting the Eye clears it
+      return next;
+    });
   };
 
   // Per-step gate for the Next button.
@@ -77,6 +82,7 @@ export default function ShiftWizard() {
     const q = [...drones].sort((a, b) => a - b).join(",");
     const params = new URLSearchParams({ drones: q, pad, algo });
     if (isOcean) params.set("scenario", "ocean");
+    if (eye && drones.includes(eye)) params.set("eye", String(eye));
     if (geo) {
       const b = geo.base, z = geo.zone;
       params.set("base", `${b.lng.toFixed(5)},${b.lat.toFixed(5)}`);
@@ -132,6 +138,16 @@ export default function ShiftWizard() {
                 </button>
               ))}
             </div>
+            {drones.length > 0 && (
+              <div className="wz-eye">
+                <span className="wz-eye-lbl">🎥 רחפן צילום (עין):</span>
+                <button className={`wz-eye-b ${eye === null ? "on" : ""}`} onClick={() => setEye(null)}>ללא</button>
+                {[...drones].sort((a, b) => a - b).map(n => (
+                  <button key={n} className={`wz-eye-b ${eye === n ? "on" : ""}`} onClick={() => setEye(n)}>D{n}</button>
+                ))}
+                <p className="wz-note">הרחפן הנבחר יצא ראשון, ימריא גבוה מעל הצי ויסרוק בשידור חי — ללא ריסוס. צפייה בתחנת הפיקוד.</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -190,6 +206,7 @@ export default function ShiftWizard() {
               <div><span>סוג משימה</span><b>{isOcean ? "🌊 ריסוס בקטריאלי (ים)" : "🌿 ריסוס יבשתי"}</b></div>
               <div><span>נקודת שיגור</span><b>{pad === "boat" ? "⛵ ספינה" : "🏟 קרקע"}</b></div>
               <div><span>רחפנים</span><b>{drones.length} · {[...drones].sort((a, b) => a - b).map(n => "D" + n).join(", ") || "—"}</b></div>
+              <div><span>רחפן צילום</span><b>{eye ? `📹 D${eye}` : "ללא"}</b></div>
               <div><span>אלגוריתם</span><b>{ALGOS.find(a => a.id === algo)?.he}</b></div>
               <div><span>אזור ריסוס</span><b>{geo ? `${dunam(geo.zone).toLocaleString("he-IL")} דונם` : "ברירת מחדל"}</b></div>
               <div><span>אישורים</span><b style={{ color: "var(--good)" }}>✓ הושלמו</b></div>

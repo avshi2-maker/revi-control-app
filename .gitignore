@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+revi-control-next/node_modules/
+
+# next.js build output
+.next/
+revi-control-next/.next/
+out/
+
+# env / secrets
+.env
+.env*.local
+
+# logs
+*.log
+npm-debug.log*
+
+# os / editor
+.DS_Store
+Thumbs.db
+*.swp
+
+# handover notes (kept out of repo)
+revi-control-next/HANDOVER_REVI_2026-09-03.md

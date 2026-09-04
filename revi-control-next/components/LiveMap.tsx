@@ -19,6 +19,8 @@ export default function LiveMap() {
   const [droneCount, setDroneCount] = useState(4);
   const [pad, setPad] = useState<"ground" | "boat">("ground");
   const [reportOpen, setReportOpen] = useState(false);
+  const [hasEye, setHasEye] = useState(false);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     const RECORD = /[?&]record=1/.test(location.search);
@@ -38,6 +40,12 @@ export default function LiveMap() {
     if (droneNums.length === 0) droneNums = [1, 2, 3, 4];
     const N = droneNums.length;
     setDroneCount(N);
+    // Camera drone ("the Eye") — ?eye=<drone number>. Launches first, loiters
+    // higher over the swarm, no spray, streams the operation to /station.
+    const eyeNumRaw = parseInt(new URLSearchParams(location.search).get("eye") || "", 10);
+    const eyeIdx = droneNums.indexOf(eyeNumRaw); // -1 = no camera drone
+    setHasEye(eyeIdx >= 0);
+    setQuery(location.search);
     setPad(new URLSearchParams(location.search).get("pad") === "boat" || ocean ? "boat" : "ground");
     const colorFor = (k: number) => COLORS[k] ?? `hsl(${(k * 47) % 360} 85% 62%)`;
 
@@ -114,15 +122,28 @@ export default function LiveMap() {
     const baseIcon = L.divIcon({ className: "", html: baseIconHtml, iconSize: [40, 46], iconAnchor: [20, 15] });
     const baseMarker = L.marker([base[1], base[0]], { icon: baseIcon, draggable: true, zIndexOffset: 200 }).addTo(map);
 
-    for (const d of drones) {
-      const html = `<div class="drone-ic" style="--dc:${d.color}"><div class="halo"></div><div class="ring"></div><div class="lbl">${d.name}</div>` +
-        `<svg class="body" viewBox="-14 -14 28 28"><g>` +
-        `<circle cx="-9" cy="-7" r="2.6" fill="${d.color}"/><circle cx="9" cy="-7" r="2.6" fill="${d.color}"/>` +
-        `<circle cx="-9" cy="7" r="2.6" fill="${d.color}"/><circle cx="9" cy="7" r="2.6" fill="${d.color}"/>` +
-        `<path d="M0 -9 L6 7 L0 4 L-6 7 Z" fill="${d.color}"/></g></svg></div>`;
-      const mk = L.marker([base[1], base[0]], { icon: L.divIcon({ className: "", html, iconSize: [26, 26], iconAnchor: [13, 13] }), interactive: false, zIndexOffset: 400 }).addTo(map);
+    drones.forEach((d, i) => {
+      const isEye = i === eyeIdx;
+      const col = isEye ? "#ffd54a" : d.color; // camera drone = gold
+      // Detailed top-down quadcopter: X-frame arms, 4 rotor-blur discs, center hub.
+      const body =
+        `<svg class="body" viewBox="-16 -16 32 32">` +
+        `<g stroke="${col}" stroke-width="2.2" stroke-linecap="round">` +
+        `<line x1="-9" y1="-9" x2="9" y2="9"/><line x1="9" y1="-9" x2="-9" y2="9"/></g>` +
+        `<g fill="${col}" opacity="0.32"><circle cx="-10" cy="-10" r="6"/><circle cx="10" cy="-10" r="6"/>` +
+        `<circle cx="-10" cy="10" r="6"/><circle cx="10" cy="10" r="6"/></g>` +
+        `<g fill="${col}"><circle cx="-10" cy="-10" r="2"/><circle cx="10" cy="-10" r="2"/>` +
+        `<circle cx="-10" cy="10" r="2"/><circle cx="10" cy="10" r="2"/></g>` +
+        (isEye
+          ? `<circle cx="0" cy="0" r="5.5" fill="#1a1206" stroke="${col}" stroke-width="1.6"/><circle cx="0" cy="0" r="2.4" fill="${col}"/>`
+          : `<path d="M0 -6 L4 5 L0 3 L-4 5 Z" fill="${col}"/><circle cx="0" cy="0" r="3.2" fill="${col}"/>`) +
+        `</svg>`;
+      const html = `<div class="drone-ic${isEye ? " eye" : ""}" style="--dc:${col}">` +
+        `<div class="halo"></div><div class="ring"></div>` +
+        `<div class="lbl">${isEye ? "📹 " + d.name : d.name}</div>${body}</div>`;
+      const mk = L.marker([base[1], base[0]], { icon: L.divIcon({ className: "", html, iconSize: [30, 30], iconAnchor: [15, 15] }), interactive: false, zIndexOffset: isEye ? 500 : 400 }).addTo(map);
       droneMarkers.push(mk);
-    }
+    });
 
     // Draggable base + reshapeable zone corners + live coordinate readout
     let lastMouse: { lat: number; lng: number } | null = null;
@@ -168,13 +189,17 @@ export default function LiveMap() {
     let cardEls: any[] = [], panelBuilt = false;
     function buildPanel() {
       const wrap = g("drones"); wrap.innerHTML = ""; cardEls = [];
-      drones.forEach((d) => {
-        const el = document.createElement("div"); el.className = "card"; el.style.setProperty("--dc", d.color);
+      drones.forEach((d, i) => {
+        const isEye = i === eyeIdx;
+        const col = isEye ? "#ffd54a" : d.color;
+        const el = document.createElement("div"); el.className = "card" + (isEye ? " eye" : ""); el.style.setProperty("--dc", col);
+        const tankLabel = isEye ? "מצלמה · גימבל" : "מיכל תרסיס";
+        const footTag = isEye ? "📹 שידור חי" : "ריסוס כבוי";
         el.innerHTML =
-          `<div class="row1"><div class="did">${d.name}</div><div class="name">רחפן ${d.name}</div><div class="state idle" data-state>בהמתנה</div></div>` +
+          `<div class="row1"><div class="did">${isEye ? "📹" : d.name}</div><div class="name">${isEye ? "עין · " + d.name : "רחפן " + d.name}</div><div class="state idle" data-state>בהמתנה</div></div>` +
           `<div class="metrics"><div class="m"><div class="mt"><span>סוללה</span><b data-bat>100%</b></div><div class="bar"><i data-batbar style="width:100%;background:var(--good)"></i></div></div>` +
-          `<div class="m"><div class="mt"><span>מיכל תרסיס</span><b data-tank>100%</b></div><div class="bar"><i data-tankbar style="width:100%;background:var(--accent)"></i></div></div></div>` +
-          `<div class="foot"><span class="spraytag" data-spray><i></i>ריסוס כבוי</span><span>מהירות <b data-spd>0.0</b> מ/ש</span><span>סיום <b data-eta>--</b></span></div>`;
+          `<div class="m"><div class="mt"><span>${tankLabel}</span><b data-tank>100%</b></div><div class="bar"><i data-tankbar style="width:100%;background:var(--accent)"></i></div></div></div>` +
+          `<div class="foot"><span class="spraytag" data-spray><i></i>${footTag}</span><span>מהירות <b data-spd>0.0</b> מ/ש</span><span>סיום <b data-eta>--</b></span></div>`;
         wrap.appendChild(el);
         cardEls.push({ el, state: el.querySelector("[data-state]"), bat: el.querySelector("[data-bat]"), batbar: el.querySelector("[data-batbar]"), tank: el.querySelector("[data-tank]"), tankbar: el.querySelector("[data-tankbar]"), spray: el.querySelector("[data-spray]"), spd: el.querySelector("[data-spd]"), eta: el.querySelector("[data-eta]") });
       });
@@ -185,6 +210,23 @@ export default function LiveMap() {
       for (let i = 0; i < drones.length; i++) {
         const st = states[i], c = cardEls[i];
         c.state.textContent = STATE_HE[st.state] ?? st.state;
+
+        // ─── Camera drone card: telemetry only, no spray/tank semantics ───
+        if (i === eyeIdx) {
+          const up = st.state === "camera";
+          c.state.className = "state" + (up ? " camera" : " idle");
+          const bat = Math.max(0, Math.round(batteryAt(i, s)));
+          c.bat.textContent = bat + "%"; c.batbar.style.width = bat + "%";
+          c.batbar.style.background = bat < 25 ? "var(--bad)" : bat < 50 ? "var(--warn)" : "var(--good)";
+          c.tank.textContent = up ? "REC" : "—"; c.tankbar.style.width = "100%";
+          c.tankbar.style.background = "#ffd54a";
+          c.spd.textContent = up ? "6.5" : "0.0";
+          c.spray.className = "spraytag" + (up ? " on" : "");
+          c.spray.innerHTML = "<i></i>" + (up ? "📹 שידור חי" : "מצלמה כבויה");
+          c.eta.textContent = up ? "∞" : "--";
+          continue;
+        }
+
         // splash = ocean expendable — dim, not warning
         const isSplash = st.state === "splash";
         const isWarn = !isSplash && (st.state === "rtb" || st.state === "refill" || st.state === "rejoin");
@@ -226,8 +268,32 @@ export default function LiveMap() {
       const states: any[] = []; let covSum = 0, active = 0;
       const plan = clamp((s - T.plan[0]) / (T.plan[1] - T.plan[0]), 0, 1);
       for (let i = 0; i < drones.length; i++) {
-        const st = evalDrone(i, s, drones[i].lane, base);
         const d = drones[i];
+
+        // ─── Camera drone (Eye): overwatch orbit above zone center, launches first, no spray ───
+        if (i === eyeIdx) {
+          const cx = (Z.w + Z.e) / 2, cy = (Z.s + Z.n) / 2;
+          const rr2 = Math.min(Z.e - Z.w, Z.n - Z.s) * 0.30;
+          const up = s >= T.mapin[0]; // Eye is airborne before the spray swarm
+          const ang = s * 0.42;
+          const ex = cx + Math.cos(ang) * rr2, ey = cy + Math.sin(ang) * rr2;
+          if (d._px != null) { const dx = ex - d._px, dy = ey - d._py; if (Math.hypot(dx, dy) > 1e-6) d.heading = Math.atan2(-dy, dx); }
+          d._px = ex; d._py = ey;
+          droneMarkers[i].setLatLng([ey, ex]);
+          const el2 = droneMarkers[i].getElement();
+          if (el2) {
+            const bodyEl = el2.querySelector(".body") as HTMLElement;
+            if (bodyEl) bodyEl.style.transform = `rotate(${d.heading + Math.PI / 2}rad)`;
+            (el2 as HTMLElement).style.opacity = up ? "1" : "0";
+          }
+          trailOuter[i].setLatLngs([]); trailInner[i].setLatLngs([]);
+          routeLines[i].setStyle({ opacity: 0 });
+          substrips[i].setStyle({ opacity: 0, fillOpacity: 0 });
+          states[i] = { state: up ? "camera" : "idle", pos: [ex, ey], drawn: 0, prog: 0, spray: false, speed: 6.5 };
+          continue; // Eye is excluded from coverage math
+        }
+
+        const st = evalDrone(i, s, drones[i].lane, base);
 
         // ─── Ocean mode: track last spray position, freeze drones at splash point ───
         let displayState: string = st.state;
@@ -281,7 +347,8 @@ export default function LiveMap() {
         states[i] = { ...st, state: displayState, pos: displayPos, drawn: displayDrawn };
       }
       zoneRect.setStyle({ opacity: ease(clamp((s - T.mapin[0]) / (T.mapin[1] - T.mapin[0]), 0, 1)) });
-      const agg = { coverage: clamp(covSum / drones.length, 0, 1), active: Math.min(N, active) };
+      const sprayCount = eyeIdx >= 0 ? drones.length - 1 : drones.length;
+      const agg = { coverage: clamp(covSum / Math.max(1, sprayCount), 0, 1), active: Math.min(sprayCount, active) };
       updatePanel(s, states, agg); phase(s); overlays(s);
       const pct = clamp(s / DUR, 0, 1); scrubFill().style.width = pct * 100 + "%"; scrubKnob().style.left = pct * 100 + "%";
     }
@@ -473,6 +540,9 @@ export default function LiveMap() {
         </button>
         <a className="navlink" href="/">← תצוגת סקיצה</a>
         <a className="navlink navlink2" href="/select">← בחר רחפנים</a>
+        {hasEye && (
+          <a className="navlink station-link" href={`/station${query}`} target="_blank" rel="noopener noreferrer">📹 תחנת פיקוד — שידור חי</a>
+        )}
         <div id="weather" />
         <div id="coordbox" style={{ position: "absolute", left: 12, bottom: 74, zIndex: 700, background: "rgba(8,20,32,.85)", color: "#d6ecff", font: "12px/1.6 'Segoe UI', sans-serif", padding: "8px 11px", borderRadius: 10, border: "1px solid rgba(120,190,220,.28)", direction: "ltr", pointerEvents: "none", minWidth: 200, boxShadow: "0 6px 20px rgba(0,0,0,.35)" }} />
         <div id="hint">רווח <b>=</b> השהה · <b>← →</b> דילוג · <b>R</b> מהתחלה · גרור את <b>{isOcean ? "הספינה" : "הבסיס"}</b> ואת <b>פינות האזור</b></div>

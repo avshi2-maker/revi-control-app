@@ -59,4 +59,6 @@ export const STATE_HE: Record<string, string> = {
   done: "הושלם",
   // ocean-only state
   splash: "נספה בים 💦",
+  // camera drone (the Eye)
+  camera: "📹 תצפית · משדר",
 };
