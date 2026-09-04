@@ -470,3 +470,17 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
 .wx-confirm{margin-top:6px}
 .wx-confirm.nogo{border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.08)}
 .wx-confirm.caution{border-color:rgba(245,158,11,.45)}
+
+/* ── Anti-drift crab overlay (live map) ── */
+.wind-arrow{width:34px;height:34px;margin:0 auto;display:flex;align-items:center;justify-content:center}
+.wind-arrow .wa-shaft{font-size:30px;line-height:1;color:#fb5a6a;text-shadow:0 0 8px rgba(251,90,106,.7);font-weight:900}
+.wa-lbl{text-align:center;font-size:11px;font-weight:800;color:#fb5a6a;margin-top:-2px;
+  text-shadow:0 1px 3px #000;white-space:nowrap}
+.crab-toggle{cursor:pointer;font-family:inherit}
+.crab-toggle.on{background:rgba(56,189,248,.16);border-color:rgba(56,189,248,.5);color:#7dd3fc;font-weight:800}
+.crabbox{position:absolute;left:12px;bottom:172px;z-index:700;width:210px;
+  background:rgba(8,20,32,.9);border:1px solid rgba(120,190,220,.28);border-radius:10px;
+  padding:9px 11px;box-shadow:0 6px 20px rgba(0,0,0,.4);direction:rtl}
+.crabbox .cb-title{font-size:12px;font-weight:800;color:#d6ecff;margin-bottom:4px}
+.crabbox svg{width:100%;height:auto;display:block}
+.crabbox .cb-legend{display:flex;gap:8px;flex-wrap:wrap;font-size:10px;font-weight:700;margin-top:3px}

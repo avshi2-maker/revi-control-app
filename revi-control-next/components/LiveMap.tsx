@@ -115,6 +115,12 @@ export default function LiveMap() {
       trailInner.push(L.polyline([], { color: trailColor, weight: 8, opacity: 0.34, lineCap: "round", lineJoin: "round" }).addTo(map));
     }
 
+    // Wind + anti-drift crab overlay state
+    let windDeg = 0, windMps = 0, crabDeg = 0, showCrab = true;
+    const windIcon = (deg: number, mps: number) =>
+      L.divIcon({ className: "", html: `<div class="wind-arrow" style="transform:rotate(${deg}deg)"><span class="wa-shaft">↑</span></div><div class="wa-lbl">🌬 ${mps.toFixed(1)}</div>`, iconSize: [46, 60], iconAnchor: [23, 30] });
+    const windMarker = L.marker([Z.n, (Z.w + Z.e) / 2], { icon: windIcon(0, 0), interactive: false, zIndexOffset: 300, opacity: 0 }).addTo(map);
+
     // Base marker: helipad H for land, amber boat icon for ocean
     const baseIconHtml = ocean
       ? `<div class="base-ic"><div class="sq" style="background:#f5b301;color:#04121a;font-size:15px;line-height:32px">⛵</div><div class="t">ספינה · שיגור</div></div>`
@@ -166,6 +172,37 @@ export default function LiveMap() {
       const w = (Z.e - Z.w) * 111320 * Math.cos(midLat);
       return Math.max(0, Math.round((h * w) / 1000));
     }
+    // Anti-drift crab overlay: wind arrow on the map + a live crab-triangle HUD
+    // showing how the drone aims into the wind so spray lands on target.
+    function crabSVG() {
+      const a = (crabDeg * Math.PI) / 180, ox = 30, oy = 78, Ln = 54;
+      const tTip = [ox, oy - Ln];                                   // intended track (up)
+      const aTip = [ox + Math.sin(a) * Ln, oy - Math.cos(a) * Ln];  // aim: crabbed into wind
+      const ln = (x1: number, y1: number, x2: number, y2: number, c: string, w = 2.4, dash = "") =>
+        `<line x1="${x1}" y1="${y1}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${c}" stroke-width="${w}" ${dash ? `stroke-dasharray="${dash}"` : ""} stroke-linecap="round"/>`;
+      return `<div class="cb-title">דפוס נגד סחף</div>` +
+        `<svg viewBox="0 0 150 92">` +
+        ln(ox, oy, tTip[0], tTip[1], "#34d399") +
+        ln(ox, oy, aTip[0], aTip[1], "#38bdf8") +
+        ln(aTip[0], aTip[1], tTip[0], tTip[1], "#fb5a6a", 2.2, "4 3") +
+        `<circle cx="${tTip[0]}" cy="${tTip[1]}" r="3" fill="#34d399"/>` +
+        `<circle cx="${aTip[0].toFixed(1)}" cy="${aTip[1].toFixed(1)}" r="3" fill="#38bdf8"/>` +
+        `<text x="78" y="26" fill="#7f9bb8" font-size="11">crab <tspan fill="#38bdf8" font-weight="700">${crabDeg}°</tspan></text>` +
+        `<text x="78" y="44" fill="#7f9bb8" font-size="11">רוח <tspan fill="#fb5a6a" font-weight="700">${windMps.toFixed(1)}</tspan> מ/ש</text>` +
+        `<text x="78" y="62" fill="#7f9bb8" font-size="11">סחף <tspan fill="#facc15" font-weight="700">~${Math.round(windMps * 2)}</tspan> מ׳</text>` +
+        `</svg>` +
+        `<div class="cb-legend"><span style="color:#34d399">■ יעד</span> <span style="color:#38bdf8">■ כיוון טיסה</span> <span style="color:#fb5a6a">■ רוח</span></div>`;
+    }
+    function drawCrab() {
+      const show = showCrab && windMps >= 0.5;
+      windMarker.setLatLng([Z.n, (Z.w + Z.e) / 2]);
+      windMarker.setIcon(windIcon(windDeg + 180, windMps)); // arrow points where wind blows TO
+      windMarker.setOpacity(show ? 1 : 0);
+      const cb = document.getElementById("crabbox");
+      if (cb) { cb.innerHTML = show ? crabSVG() : ""; cb.style.display = show ? "block" : "none"; }
+      const bt = document.getElementById("crabtoggle");
+      if (bt) bt.classList.toggle("on", showCrab);
+    }
     function relayout() {
       const wspan = (Z.e - Z.w) / N;
       for (let i = 0; i < N; i++) substrips[i].setBounds([[Z.s, Z.w + i * wspan], [Z.n, Z.w + (i + 1) * wspan]]);
@@ -182,7 +219,7 @@ export default function LiveMap() {
     const onHandle = () => {
       const sw = swH.getLatLng(), ne = neH.getLatLng();
       Z = { w: Math.min(sw.lng, ne.lng), e: Math.max(sw.lng, ne.lng), s: Math.min(sw.lat, ne.lat), n: Math.max(sw.lat, ne.lat) };
-      relayout(); syncHandles(); updateCoordBox();
+      relayout(); syncHandles(); updateCoordBox(); drawCrab();
     };
     swH.on("drag", onHandle); neH.on("drag", onHandle);
     let zmc = { lat: (Z.s + Z.n) / 2, lng: (Z.w + Z.e) / 2 };
@@ -190,7 +227,7 @@ export default function LiveMap() {
     moveH.on("drag", (e: any) => {
       const p = e.latlng; const dLat = p.lat - zmc.lat, dLng = p.lng - zmc.lng; zmc = { lat: p.lat, lng: p.lng };
       Z = { w: Z.w + dLng, e: Z.e + dLng, s: Z.s + dLat, n: Z.n + dLat };
-      relayout(); swH.setLatLng([Z.s, Z.w]); neH.setLatLng([Z.n, Z.e]); updateCoordBox();
+      relayout(); swH.setLatLng([Z.s, Z.w]); neH.setLatLng([Z.n, Z.e]); updateCoordBox(); drawCrab();
     });
     map.on("mousemove", (e: any) => { lastMouse = { lat: e.latlng.lat, lng: e.latlng.lng }; updateCoordBox(); });
     updateCoordBox();
@@ -405,12 +442,18 @@ export default function LiveMap() {
           wEl.innerHTML = `<div class="w-row"><span>🌡 ${temp}°C</span><span>💧 ${hum}%</span></div><div class="w-row"><span>🌬 ${ws.toFixed(1)} מ/ש ${wdir}</span></div><div class="w-proto" style="color:${col}">${ok}</div>`;
           wEl.classList.add("loaded");
         }
+        // Feed the anti-drift crab overlay
+        windDeg = c.winddirection_10m; windMps = ws;
+        crabDeg = Math.round((Math.asin(Math.min(1, ws / 10)) * 180) / Math.PI);
+        drawCrab();
       } catch { /* silent */ }
     })();
 
     const onReplay = () => reset();
     g("replay").addEventListener("click", onReplay);
     g("endReplay").addEventListener("click", onReplay);
+    const onCrab = () => { showCrab = !showCrab; drawCrab(); };
+    g("crabtoggle")?.addEventListener("click", onCrab);
     let dragging = false;
     const scrubTo = (ev: any) => { const el = g("scrub"); const r = el.getBoundingClientRect(); const x = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left; seek((x / r.width) * DUR); };
     const onDown = (e: any) => { dragging = true; setPlaying(false); scrubTo(e); e.stopPropagation(); };
@@ -553,6 +596,8 @@ export default function LiveMap() {
         {hasEye && (
           <a className="navlink station-link" href={`/station${query}`} target="_blank" rel="noopener noreferrer">📹 תחנת פיקוד — שידור חי</a>
         )}
+        <button id="crabtoggle" className="navlink crab-toggle on">🌬 דפוס נגד סחף</button>
+        <div id="crabbox" className="crabbox" />
         <div id="weather" />
         <div id="coordbox" style={{ position: "absolute", left: 12, bottom: 74, zIndex: 700, background: "rgba(8,20,32,.85)", color: "#d6ecff", font: "12px/1.6 'Segoe UI', sans-serif", padding: "8px 11px", borderRadius: 10, border: "1px solid rgba(120,190,220,.28)", direction: "ltr", pointerEvents: "none", minWidth: 200, boxShadow: "0 6px 20px rgba(0,0,0,.35)" }} />
         <div id="hint">רווח <b>=</b> השהה · <b>← →</b> דילוג · <b>R</b> מהתחלה · גרור את <b>{isOcean ? "הספינה" : "הבסיס"}</b> ואת <b>פינות האזור</b></div>
