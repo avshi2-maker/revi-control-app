@@ -3,6 +3,10 @@ import { computeAdvice, VERDICT_HE, type WxIn, type Advice } from "@/lib/weather
 
 export const maxDuration = 30; // allow the Claude call room (Pro plans)
 
+// Haiku = fast, finishes well under the serverless timeout so advice never
+// silently falls back to "מחושב". Override with CLAUDE_MODEL env if desired.
+const MODEL = process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001";
+
 // GET /api/weather-advice → health check. Reports whether the key is configured
 // and, with ?live=1, makes a tiny real call to confirm it actually works.
 // Never returns the key itself.
@@ -10,18 +14,18 @@ export async function GET(req: Request) {
   const key = process.env.ANTHROPIC_API_KEY;
   const present = !!key;
   const live = new URL(req.url).searchParams.get("live") === "1";
-  if (!present) return NextResponse.json({ keyPresent: false, model: "claude-sonnet-5", note: "ANTHROPIC_API_KEY לא מוגדר — היועץ עובד במצב מחושב" });
-  if (!live) return NextResponse.json({ keyPresent: true, model: "claude-sonnet-5", note: "מפתח קיים. הוסף ?live=1 לבדיקת חיבור אמיתית" });
+  if (!present) return NextResponse.json({ keyPresent: false, model: MODEL, note: "ANTHROPIC_API_KEY לא מוגדר — היועץ עובד במצב מחושב" });
+  if (!live) return NextResponse.json({ keyPresent: true, model: MODEL, note: "מפתח קיים. הוסף ?live=1 לבדיקת חיבור אמיתית" });
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: "claude-sonnet-5", max_tokens: 16, messages: [{ role: "user", content: "reply OK" }] }),
+      body: JSON.stringify({ model: MODEL, max_tokens: 16, messages: [{ role: "user", content: "reply OK" }] }),
     });
     const ok = r.ok;
     let detail = "";
     if (!ok) { try { detail = JSON.stringify((await r.json())?.error ?? {}); } catch { /* noop */ } }
-    return NextResponse.json({ keyPresent: true, apiWorks: ok, status: r.status, model: "claude-sonnet-5", detail });
+    return NextResponse.json({ keyPresent: true, apiWorks: ok, status: r.status, model: MODEL, detail });
   } catch (e: any) {
     return NextResponse.json({ keyPresent: true, apiWorks: false, error: String(e?.message ?? e) });
   }
@@ -74,7 +78,7 @@ export async function POST(req: Request) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-5",
+        model: MODEL,
         max_tokens: 1024,
         system: sys,
         messages: [{ role: "user", content: user }],

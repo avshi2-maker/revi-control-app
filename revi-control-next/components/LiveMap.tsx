@@ -9,6 +9,14 @@ import {
 } from "@/lib/simulation";
 import MissionReport from "@/components/MissionReport";
 
+// Great-circle distance (km) between two [lng,lat] points.
+function kmBetween(a: Pt, b: Pt) {
+  const R = 6371, toR = Math.PI / 180;
+  const dLat = (b[1] - a[1]) * toR, dLng = (b[0] - a[0]) * toR;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * toR) * Math.cos(b[1] * toR) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
 // Live map: real Esri satellite tiles + drones on GPS coordinates.
 // URL params:
 //   ?drones=1,2,3     — which drones to fly (default D1–D4)
@@ -255,6 +263,7 @@ export default function LiveMap() {
     }
     function updatePanel(s: number, states: any[], agg: any) {
       if (!panelBuilt) buildPanel();
+      let minBat = 100;
       for (let i = 0; i < drones.length; i++) {
         const st = states[i], c = cardEls[i];
         c.state.textContent = STATE_HE[st.state] ?? st.state;
@@ -297,13 +306,28 @@ export default function LiveMap() {
           const wt = DRONE_SPEC.dryKg + (tank / 100) * DRONE_SPEC.tankMaxL; // tank drains → lighter
           c.wt.textContent = `${wt.toFixed(1)} / ${DRONE_SPEC.mtowKg} ק״ג`;
         }
-        c.el.classList.toggle("alert", isWarn);
+        if (st.state !== "done" && s >= T.launch[0]) minBat = Math.min(minBat, bat);
+        // Land low-battery-for-return highlight
+        const low = !!st.lowReturn;
+        c.el.classList.toggle("lowbat", low);
+        if (low) { c.batbar.style.background = "var(--bad)"; }
+        c.el.classList.toggle("alert", isWarn || low);
         c.el.classList.toggle("splash", isSplash);
       }
       g("kCov").textContent = Math.round(agg.coverage * 100) + "%";
       g("kActive").textContent = agg.active + "/" + N;
       g("kTime").textContent = fmtHM(Math.max(12, 120 - Math.round(agg.coverage * 108)));
       g("clock").textContent = fmtMS(s);
+      // Flight timer + battery-remaining (starts at launch)
+      const launched = s >= T.launch[0];
+      const ftEl = g("flightTime"), blEl = g("battLeft"), ptEl = g("ptimer");
+      if (ftEl) ftEl.textContent = fmtMS(launched ? Math.max(0, s - T.launch[0]) : 0);
+      if (blEl) {
+        const mins = Math.max(0, Math.round(DRONE_SPEC.flightMinutesFull * (minBat / 100)));
+        blEl.textContent = launched ? `~${mins} דק׳` : "--";
+        blEl.style.color = minBat < 25 ? "var(--bad)" : minBat < 45 ? "var(--warn)" : "var(--good)";
+      }
+      if (ptEl) ptEl.classList.toggle("live", launched && s < T.rth[1]);
       g("fleetState").textContent = s < T.launch[0] ? "בהמתנה" : s < T.spray[1] ? "משימה פעילה" : s < T.rth[1] ? (ocean ? "רחפנים נספו בים" : "חוזרים לבסיס") : "הושלם";
     }
     let lastPhase = "";
@@ -320,7 +344,7 @@ export default function LiveMap() {
     const scrubKnob = () => g("scrub").querySelector(".knob") as HTMLElement;
 
     function render(s: number) {
-      const states: any[] = []; let covSum = 0, active = 0;
+      const states: any[] = []; let covSum = 0, active = 0, unsafeCount = 0;
       const plan = clamp((s - T.plan[0]) / (T.plan[1] - T.plan[0]), 0, 1);
       for (let i = 0; i < drones.length; i++) {
         const d = drones[i];
@@ -414,7 +438,24 @@ export default function LiveMap() {
         if (!ocean && ["takeoff", "spraying", "rtb", "rejoin", "rth"].includes(st.state)) active++;
         if (ocean && ["takeoff", "spraying"].includes(displayState)) active++;
 
-        states[i] = { ...st, state: displayState, pos: displayPos, drawn: displayDrawn };
+        // Land safe-return check: does the drone have battery to reach base + land?
+        let lowReturn = false;
+        if (!ocean && displayState !== "done" && s >= T.launch[0]) {
+          const bat = batteryAt(i, s);
+          const distKm = kmBetween(displayPos, base);
+          const rangeKm = DRONE_SPEC.rangeKmFull * (bat / 100);
+          lowReturn = rangeKm < distKm * DRONE_SPEC.returnReserve;
+          if (lowReturn) unsafeCount++;
+        }
+
+        states[i] = { ...st, state: displayState, pos: displayPos, drawn: displayDrawn, lowReturn };
+      }
+      // Fleet-level safe-return banner (land only)
+      const rw = g("rtbwarn");
+      if (rw) {
+        const on = !ocean && unsafeCount > 0;
+        rw.textContent = on ? `⚠ ${unsafeCount} רחפנים — סוללה נמוכה לחזרה בטוחה לבסיס` : "";
+        rw.classList.toggle("show", on);
       }
       zoneRect.setStyle({ opacity: ease(clamp((s - T.mapin[0]) / (T.mapin[1] - T.mapin[0]), 0, 1)) });
       const sprayCount = eyeIdx >= 0 ? drones.length - 1 : drones.length;
@@ -437,6 +478,17 @@ export default function LiveMap() {
       g("titlecard").classList.remove("hidden"); g("endcard").classList.add("hidden");
       g("phase").classList.remove("show"); lastPhase = ""; render(0);
     }
+
+    // Real wall clock + date (dd/mm/yyyy HH:MM:SS), updated every second.
+    const p2 = (x: number) => String(x).padStart(2, "0");
+    const tickClock = () => {
+      const n = new Date();
+      const wt = g("wcTime"), wdt = g("wcDate");
+      if (wt) wt.textContent = `${p2(n.getHours())}:${p2(n.getMinutes())}:${p2(n.getSeconds())}`;
+      if (wdt) wdt.textContent = `${p2(n.getDate())}/${p2(n.getMonth() + 1)}/${n.getFullYear()}`;
+    };
+    tickClock();
+    const clockTimer = window.setInterval(tickClock, 1000);
 
     // Weather widget (Open-Meteo, no API key needed)
     const bearingToHe = (deg: number) => {
@@ -506,6 +558,7 @@ export default function LiveMap() {
 
     return () => {
       cancelAnimationFrame(raf);
+      clearInterval(clockTimer);
       g("replay")?.removeEventListener("click", onReplay);
       g("endReplay")?.removeEventListener("click", onReplay);
       window.removeEventListener("mousemove", onMove);
@@ -545,6 +598,10 @@ export default function LiveMap() {
           )}
         </div>
         <div id="drones" />
+        <div className="p-timer" id="ptimer">
+          <span>⏱ זמן טיסה <b id="flightTime">00:00</b></span>
+          <span>🔋 סוללה נותרה <b id="battLeft">--</b></span>
+        </div>
         <div className="p-foot">
           <span className="fleet">מצב צי: <b id="fleetState">בהמתנה</b></span>
           <span id="clock">00:00</span>
@@ -558,6 +615,7 @@ export default function LiveMap() {
             <div className="logo" />
             <div><b>Revi-Control</b><span>{isOcean ? "Bacteria Spray · Mediterranean" : "Autonomous Spray Fleet · Live Map"}</span></div>
           </div>
+          <div className="wallclock"><span id="wcTime">--:--:--</span><span id="wcDate">--/--/----</span></div>
           <div className="kpis">
             <div className="kpi cov"><div className="v" id="kCov">0%</div><div className="l">כיסוי</div></div>
             <div className="kpi"><div className="v" id="kActive">0/4</div><div className="l">פעילים</div></div>
@@ -567,6 +625,8 @@ export default function LiveMap() {
         </div>
         <div id="phase"><span id="phaseTxt" /><span className="dotp" /></div>
         <div id="pausebadge">⏸ מושהה — מצב הדגמה</div>
+        <div id="rtbwarn" className="rtbwarn" />
+
 
         <div className="overlay" id="titlecard">
           <div className="biglogo" />

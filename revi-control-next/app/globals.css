@@ -60,6 +60,28 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
 .wtline{display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:8px;
   border-top:1px solid rgba(29,51,72,.6);font-size:11px;color:var(--muted)}
 .wtline b{color:var(--ink);font-variant-numeric:tabular-nums;font-size:12px}
+.card.lowbat{border-color:rgba(248,113,113,.55);box-shadow:0 0 0 1px rgba(248,113,113,.3) inset}
+.card.lowbat:before{background:var(--bad)}
+
+/* real wall clock in the topbar */
+.wallclock{display:flex;flex-direction:column;align-items:center;line-height:1.15;margin-inline:14px;
+  font-variant-numeric:tabular-nums;padding:4px 12px;border-radius:10px;background:rgba(8,20,32,.55);border:1px solid var(--line)}
+.wallclock #wcTime{font-size:16px;font-weight:800;color:var(--accent);letter-spacing:.5px}
+.wallclock #wcDate{font-size:11px;color:var(--muted)}
+
+/* mission flight timer + battery-remaining */
+.p-timer{display:flex;justify-content:space-between;gap:10px;padding:9px 14px;font-size:12.5px;
+  color:var(--muted);border-top:1px solid var(--line);background:rgba(8,20,32,.4)}
+.p-timer b{color:var(--ink);font-variant-numeric:tabular-nums;font-size:13px}
+.p-timer.live{background:rgba(56,224,138,.06)}
+.p-timer.live b#flightTime{color:var(--spray)}
+
+/* land safe-return warning banner */
+.rtbwarn{position:absolute;top:64px;left:50%;transform:translateX(-50%);z-index:750;display:none;
+  background:rgba(248,113,113,.16);border:1px solid rgba(248,113,113,.5);color:#ffd0d4;
+  font-size:13px;font-weight:800;padding:8px 16px;border-radius:22px;backdrop-filter:blur(4px);
+  box-shadow:0 6px 20px rgba(0,0,0,.4);white-space:nowrap}
+.rtbwarn.show{display:block;animation:rec 1.6s steps(1) infinite}
 .card .state.splash{background:rgba(34,211,238,.1);color:var(--accent);border-color:rgba(34,211,238,.35)}
 .card.splash{opacity:.6}
 .card.splash:before{background:var(--accent)}

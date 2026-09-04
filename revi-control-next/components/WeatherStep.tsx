@@ -34,8 +34,16 @@ export default function WeatherStep({
         );
         const wd = await wr.json();
         const cur = wd.current;
-        const obsTime = (cur.time || "").replace("T", " ");
-        if (alive) setObs({ time: obsTime, fetched: new Date().toLocaleString("he-IL") });
+        // Open-Meteo gives "2026-09-04T19:15" → format dd/mm/yyyy HH:MM
+        const fmt = (iso: string) => {
+          const [d, t] = (iso || "").split("T");
+          const [y, mo, da] = (d || "").split("-");
+          return y ? `${da}/${mo}/${y} ${t || ""}`.trim() : iso;
+        };
+        const now = new Date();
+        const p2 = (x: number) => String(x).padStart(2, "0");
+        const fetchedStr = `${p2(now.getDate())}/${p2(now.getMonth() + 1)}/${now.getFullYear()} ${p2(now.getHours())}:${p2(now.getMinutes())}`;
+        if (alive) setObs({ time: fmt(cur.time), fetched: fetchedStr });
         const ar = await fetch("/api/weather-advice", {
           method: "POST",
           headers: { "content-type": "application/json" },
