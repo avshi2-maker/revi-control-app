@@ -7,6 +7,7 @@ import {
   DUR, clamp, ease, boustro, pathLen, pointAt, evalDrone,
   batteryAt, tankAt, phaseText, fmtHM, fmtMS, type Pt,
 } from "@/lib/simulation";
+import MissionReport from "@/components/MissionReport";
 
 // Live map: real Esri satellite tiles + drones on GPS coordinates.
 // URL params:
@@ -15,6 +16,9 @@ import {
 export default function LiveMap() {
   // Expose isOcean to JSX (set early in useEffect since we're ssr:false)
   const [isOcean, setIsOcean] = useState(false);
+  const [droneCount, setDroneCount] = useState(4);
+  const [pad, setPad] = useState<"ground" | "boat">("ground");
+  const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
     const RECORD = /[?&]record=1/.test(location.search);
@@ -33,6 +37,8 @@ export default function LiveMap() {
       : [];
     if (droneNums.length === 0) droneNums = [1, 2, 3, 4];
     const N = droneNums.length;
+    setDroneCount(N);
+    setPad(new URLSearchParams(location.search).get("pad") === "boat" || ocean ? "boat" : "ground");
     const colorFor = (k: number) => COLORS[k] ?? `hsl(${(k * 47) % 360} 85% 62%)`;
 
     let base: Pt = [activeGEO.base.lng, activeGEO.base.lat];
@@ -435,10 +441,15 @@ export default function LiveMap() {
             </div>
           )}
           <div className="contact"><b>Revi-Control</b> · תוכנת מרכז השליטה · צרו קשר להדגמה</div>
-          <button className="endcard-btn" id="endReplay">
-            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z" /></svg>
-            הפעל שוב
-          </button>
+          <div className="endcard-btns">
+            <button className="endcard-btn" id="endReplay">
+              <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z" /></svg>
+              הפעל שוב
+            </button>
+            <button className="endcard-btn report" onClick={() => setReportOpen(true)}>
+              📄 דוח משימה
+            </button>
+          </div>
         </div>
 
         <button id="replay" title="הפעל שוב">
@@ -452,6 +463,14 @@ export default function LiveMap() {
         <div id="hint">רווח <b>=</b> השהה · <b>← →</b> דילוג · <b>R</b> מהתחלה · גרור את <b>{isOcean ? "הספינה" : "הבסיס"}</b> ואת <b>פינות האזור</b></div>
         <div id="scrub"><div className="track" /><div className="fill" /><div className="knob" /></div>
       </div>
+
+      <MissionReport
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        scenario={isOcean ? "ocean" : "land"}
+        droneCount={droneCount}
+        pad={pad}
+      />
     </div>
   );
 }

@@ -38,6 +38,15 @@ export const GEO_OCEAN = {
   zoom: 11,
 };
 
+// Ocean mission economics — expendable drones are a contracted, recognized cost.
+export const OCEAN_UNIT_COST = 4200; // ₪ per expendable drone lost at sea
+
+// Mission report reference figures (match the endcard).
+export const REPORT = {
+  land:  { areaLabel: "420 דונם",   areaTreated: "420 דונם",       durationHM: "1:48" },
+  ocean: { areaLabel: "~1,240 דונם ימי", areaTreated: "~1,240 דונם ימי", durationHM: "1:48" },
+} as const;
+
 // Hebrew state labels.
 export const STATE_HE: Record<string, string> = {
   idle: "בהמתנה",

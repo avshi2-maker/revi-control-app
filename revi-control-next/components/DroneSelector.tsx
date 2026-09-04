@@ -15,9 +15,20 @@ function droneData(n: number) {
 const FLEET = Array.from({ length: 50 }, (_, i) => droneData(i + 1));
 const AVAILABLE = FLEET.filter(d => !d.disabled).map(d => d.n); // all launch-ready drones
 
+type Scenario = "land" | "ocean";
+type Pad = "ground" | "boat";
+
 export default function DroneSelector() {
   const [selected, setSelected] = useState<number[]>([]);
+  const [scenario, setScenario] = useState<Scenario>("land");
+  const [pad, setPad] = useState<Pad>("ground");
   const router = useRouter();
+
+  // Picking a scenario auto-sets the natural launch pad (user can still override).
+  const pickScenario = (s: Scenario) => {
+    setScenario(s);
+    setPad(s === "ocean" ? "boat" : "ground");
+  };
 
   const toggle = (n: number, disabled: boolean) => {
     if (disabled) return;
@@ -32,8 +43,12 @@ export default function DroneSelector() {
   const launch = () => {
     if (selected.length === 0) return;
     const q = [...selected].sort((a, b) => a - b).join(",");
-    router.push(`/map?drones=${q}`);
+    const params = new URLSearchParams({ drones: q, pad });
+    if (scenario === "ocean") params.set("scenario", "ocean");
+    router.push(`/map?${params.toString()}`);
   };
+
+  const isOcean = scenario === "ocean";
 
   return (
     <div className="sel-page">
@@ -41,7 +56,9 @@ export default function DroneSelector() {
         <div className="logo" />
         <div>
           <h1>בחר רחפנים למשימה</h1>
-          <p>ריסוס עמק השרון · בחר עד {AVAILABLE.length} רחפנים זמינים</p>
+          <p>
+            {isOcean ? "ריסוס בקטריאלי · ים תיכון מול אשדוד" : "ריסוס עמק השרון"} · בחר עד {AVAILABLE.length} רחפנים זמינים
+          </p>
         </div>
         <div className="sel-count">
           <span className="sel-badge">נבחרו {selected.length} / {AVAILABLE.length}</span>
@@ -59,6 +76,31 @@ export default function DroneSelector() {
       </div>
 
       <div className="sel-body">
+        {/* Mission scenario + launch pad */}
+        <div className="sel-scen">
+          <div className="scen-group">
+            <span className="scen-label">סוג משימה</span>
+            <button className={`scen-btn ${!isOcean ? "on" : ""}`} onClick={() => pickScenario("land")}>
+              🌿 ריסוס יבשתי
+            </button>
+            <button className={`scen-btn ${isOcean ? "on ocean" : ""}`} onClick={() => pickScenario("ocean")}>
+              🌊 ריסוס בקטריאלי (ים)
+            </button>
+          </div>
+          <div className="scen-group">
+            <span className="scen-label">נקודת שיגור</span>
+            <button className={`scen-btn ${pad === "ground" ? "on" : ""}`} onClick={() => setPad("ground")}>
+              🏟 קרקע
+            </button>
+            <button className={`scen-btn ${pad === "boat" ? "on ocean" : ""}`} onClick={() => setPad("boat")}>
+              ⛵ ספינה
+            </button>
+          </div>
+          {isOcean && (
+            <div className="scen-warn">⚠ במשימת ים הרחפנים אינם חוזרים — שיגור חד-כיווני</div>
+          )}
+        </div>
+
         <div className="sel-legend">
           <div className="leg"><div className="leg-dot" style={{background:"var(--good)"}} />זמין לשיגור</div>
           <div className="leg"><div className="leg-dot" style={{background:"var(--warn)"}} />בטעינה</div>
