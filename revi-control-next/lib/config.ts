@@ -47,6 +47,7 @@ export const DRONE_SPEC = {
   mtowKg: 90,         // max takeoff weight (warranty / safety limit)
   tankMaxL: 45,       // spray tank capacity
   sensorKitKg: 1.5,   // optional extra sensor package
+  coverageDunamFull: 400, // area one drone can cover on a full battery
 };
 
 // Ocean mission economics — expendable drones are a contracted, recognized cost.

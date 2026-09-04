@@ -5,6 +5,10 @@ import dynamic from "next/dynamic";
 import type { Geo } from "@/components/ZonePicker";
 import WeatherStep from "@/components/WeatherStep";
 import WeightStep from "@/components/WeightStep";
+import { GEO, GEO_OCEAN, DRONE_SPEC } from "@/lib/config";
+
+// Deterministic per-drone battery (same rule as the fleet grid).
+function battery(n: number) { return 70 + ((n * 17 + 3) % 30); }
 
 // Leaflet touches window at import — client only.
 const ZonePicker = dynamic(() => import("@/components/ZonePicker"), { ssr: false });
@@ -56,7 +60,17 @@ export default function ShiftWizard() {
 
   const isOcean = scenario === "ocean";
   const permitOk = permit.airspace && permit.tank;
-  const LAST = STEPS.length - 1; // 7
+  const LAST = STEPS.length - 1; // 8
+
+  // Battery / range feasibility: can the selected fleet cover the zone area?
+  const sprayDrones = drones.filter(n => n !== eye);
+  const zoneForCalc = geo ? geo.zone : (isOcean ? GEO_OCEAN.zone : GEO.zone);
+  const areaDunam = dunam(zoneForCalc);
+  const nSpray = Math.max(1, sprayDrones.length);
+  const perDroneDunam = Math.round(areaDunam / nSpray);
+  const minBat = sprayDrones.length ? Math.min(...sprayDrones.map(battery)) : 100;
+  const capMinDunam = Math.round(DRONE_SPEC.coverageDunamFull * (minBat / 100) * (isOcean ? 1.15 : 1));
+  const rangeOk = sprayDrones.length > 0 && perDroneDunam <= capMinDunam;
 
   const pickScenario = (s: Scenario) => {
     setScenario(s);
@@ -82,7 +96,7 @@ export default function ShiftWizard() {
     true,               // 4 map + pad
     permitOk,           // 5 clearances
     true,               // 6 algorithm
-    true,               // 7 summary
+    rangeOk,            // 7 summary — battery/range must cover the zone
     true,               // 8 launch
   ][step];
 
@@ -228,6 +242,26 @@ export default function ShiftWizard() {
               <div><span>אלגוריתם</span><b>{ALGOS.find(a => a.id === algo)?.he}</b></div>
               <div><span>אזור ריסוס</span><b>{geo ? `${dunam(geo.zone).toLocaleString("he-IL")} דונם` : "ברירת מחדל"}</b></div>
               <div><span>אישורים</span><b style={{ color: "var(--good)" }}>✓ הושלמו</b></div>
+            </div>
+
+            <div className={`wz-range ${rangeOk ? "ok" : "bad"}`}>
+              <div className="wz-range-head">
+                <span>🔋 סוללה וטווח כיסוי</span>
+                <b>{rangeOk ? "✅ מספיק" : "🚫 לא מספיק"}</b>
+              </div>
+              <div className="wz-range-grid">
+                <div><span>שטח כולל</span><b>{areaDunam.toLocaleString("he-IL")} דונם</b></div>
+                <div><span>רחפני ריסוס</span><b>{sprayDrones.length}</b></div>
+                <div><span>נדרש לרחפן</span><b>{perDroneDunam.toLocaleString("he-IL")} דונם</b></div>
+                <div><span>יכולת (סוללה {minBat}%)</span><b>{capMinDunam.toLocaleString("he-IL")} דונם</b></div>
+              </div>
+              {!rangeOk && (
+                <div className="wz-warn" style={{ marginTop: 10 }}>
+                  {sprayDrones.length === 0
+                    ? "לא נבחרו רחפני ריסוס."
+                    : `הרחפן החלש ביותר יכול לכסות ${capMinDunam.toLocaleString("he-IL")} דונם בלבד — הוסף רחפנים, הקטן את האזור, או המתן לטעינה.`}
+                </div>
+              )}
             </div>
           </div>
         )}

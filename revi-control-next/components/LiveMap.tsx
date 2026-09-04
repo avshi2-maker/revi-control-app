@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { COLORS, NAMES, GEO, GEO_OCEAN, TIMELINE as T, STATE_HE } from "@/lib/config";
+import { COLORS, NAMES, GEO, GEO_OCEAN, TIMELINE as T, STATE_HE, DRONE_SPEC } from "@/lib/config";
 import {
   DUR, clamp, ease, boustro, pathLen, pointAt, evalDrone,
   batteryAt, tankAt, phaseText, fmtHM, fmtMS, type Pt,
@@ -246,9 +246,10 @@ export default function LiveMap() {
           `<div class="row1"><div class="did">${isEye ? "📹" : d.name}</div><div class="name">${isEye ? "עין · " + d.name : "רחפן " + d.name}</div><div class="state idle" data-state>בהמתנה</div></div>` +
           `<div class="metrics"><div class="m"><div class="mt"><span>סוללה</span><b data-bat>100%</b></div><div class="bar"><i data-batbar style="width:100%;background:var(--good)"></i></div></div>` +
           `<div class="m"><div class="mt"><span>${tankLabel}</span><b data-tank>100%</b></div><div class="bar"><i data-tankbar style="width:100%;background:var(--accent)"></i></div></div></div>` +
-          `<div class="foot"><span class="spraytag" data-spray><i></i>${footTag}</span><span>מהירות <b data-spd>0.0</b> מ/ש</span><span>סיום <b data-eta>--</b></span></div>`;
+          `<div class="foot"><span class="spraytag" data-spray><i></i>${footTag}</span><span>מהירות <b data-spd>0.0</b> מ/ש</span><span>סיום <b data-eta>--</b></span></div>` +
+          `<div class="wtline"><span>משקל המראה</span><b data-wt>--</b></div>`;
         wrap.appendChild(el);
-        cardEls.push({ el, state: el.querySelector("[data-state]"), bat: el.querySelector("[data-bat]"), batbar: el.querySelector("[data-batbar]"), tank: el.querySelector("[data-tank]"), tankbar: el.querySelector("[data-tankbar]"), spray: el.querySelector("[data-spray]"), spd: el.querySelector("[data-spd]"), eta: el.querySelector("[data-eta]") });
+        cardEls.push({ el, state: el.querySelector("[data-state]"), bat: el.querySelector("[data-bat]"), batbar: el.querySelector("[data-batbar]"), tank: el.querySelector("[data-tank]"), tankbar: el.querySelector("[data-tankbar]"), spray: el.querySelector("[data-spray]"), spd: el.querySelector("[data-spd]"), eta: el.querySelector("[data-eta]"), wt: el.querySelector("[data-wt]") });
       });
       panelBuilt = true;
     }
@@ -260,17 +261,20 @@ export default function LiveMap() {
 
         // ─── Camera drone card: telemetry only, no spray/tank semantics ───
         if (i === eyeIdx) {
-          const up = st.state === "camera";
-          c.state.className = "state" + (up ? " camera" : " idle");
+          const rec = st.state === "camera";
+          const landing = st.state === "rth";
+          const landed = st.state === "done";
+          c.state.className = "state" + (rec ? " camera" : landing ? " warn" : " idle");
           const bat = Math.max(0, Math.round(batteryAt(i, s)));
           c.bat.textContent = bat + "%"; c.batbar.style.width = bat + "%";
           c.batbar.style.background = bat < 25 ? "var(--bad)" : bat < 50 ? "var(--warn)" : "var(--good)";
-          c.tank.textContent = up ? "REC" : "—"; c.tankbar.style.width = "100%";
+          c.tank.textContent = rec ? "REC" : landed ? "✓" : "—"; c.tankbar.style.width = "100%";
           c.tankbar.style.background = "#ffd54a";
-          c.spd.textContent = up ? "6.5" : "0.0";
-          c.spray.className = "spraytag" + (up ? " on" : "");
-          c.spray.innerHTML = "<i></i>" + (up ? "📹 שידור חי" : "מצלמה כבויה");
-          c.eta.textContent = up ? "∞" : "--";
+          c.spd.textContent = landing ? "9.0" : rec ? "6.5" : "0.0";
+          c.spray.className = "spraytag" + (rec ? " on" : "");
+          c.spray.innerHTML = "<i></i>" + (rec ? "📹 שידור חי" : landing ? "חוזר לבסיס" : landed ? "נחת בבסיס" : "מצלמה כבויה");
+          c.eta.textContent = rec ? "∞" : landed ? "✓" : "--";
+          if (c.wt) c.wt.textContent = `${(DRONE_SPEC.dryKg + 2.5).toFixed(1)} / ${DRONE_SPEC.mtowKg} ק״ג`; // dry + gimbal
           continue;
         }
 
@@ -289,6 +293,10 @@ export default function LiveMap() {
         c.spray.innerHTML = "<i></i>" + (isSplash ? "ריסוס הושלם" : st.spray ? "ריסוס פעיל" : "ריסוס כבוי");
         const etaMin = (st.state === "done" || isSplash) ? 0 : Math.max(0, Math.round((1 - st.prog) * 46));
         c.eta.textContent = (st.state === "done" || isSplash) ? "✓" : etaMin + " דק׳";
+        if (c.wt) {
+          const wt = DRONE_SPEC.dryKg + (tank / 100) * DRONE_SPEC.tankMaxL; // tank drains → lighter
+          c.wt.textContent = `${wt.toFixed(1)} / ${DRONE_SPEC.mtowKg} ק״ג`;
+        }
         c.el.classList.toggle("alert", isWarn);
         c.el.classList.toggle("splash", isSplash);
       }
@@ -317,13 +325,26 @@ export default function LiveMap() {
       for (let i = 0; i < drones.length; i++) {
         const d = drones[i];
 
-        // ─── Camera drone (Eye): overwatch orbit above zone center, launches first, no spray ───
+        // ─── Camera drone (Eye): overwatch orbit, then RTB on land after spray ends ───
         if (i === eyeIdx) {
           const cx = (Z.w + Z.e) / 2, cy = (Z.s + Z.n) / 2;
           const rr2 = Math.min(Z.e - Z.w, Z.n - Z.s) * 0.30;
-          const up = s >= T.mapin[0]; // Eye is airborne before the spray swarm
-          const ang = s * 0.42;
-          const ex = cx + Math.cos(ang) * rr2, ey = cy + Math.sin(ang) * rr2;
+          const up = s >= T.mapin[0];
+          const orbitEnd = T.spray[1]; // 45s — spray complete
+          const orbitAt = (tt: number): Pt => [cx + Math.cos(tt * 0.42) * rr2, cy + Math.sin(tt * 0.42) * rr2];
+          let ex: number, ey: number, estate: string;
+          if (!ocean && s >= orbitEnd) {
+            // Land: the camera drone is valuable — fly it home and land.
+            const p0 = orbitAt(orbitEnd);
+            const k = clamp((s - orbitEnd) / (T.rth[1] - orbitEnd), 0, 1);
+            const e2 = ease(k);
+            ex = p0[0] + (base[0] - p0[0]) * e2;
+            ey = p0[1] + (base[1] - p0[1]) * e2;
+            estate = k >= 1 ? "done" : "rth";
+          } else {
+            const p = orbitAt(s); ex = p[0]; ey = p[1];
+            estate = up ? "camera" : "idle";
+          }
           if (d._px != null) { const dx = ex - d._px, dy = ey - d._py; if (Math.hypot(dx, dy) > 1e-6) d.heading = Math.atan2(-dy, dx); }
           d._px = ex; d._py = ey;
           droneMarkers[i].setLatLng([ey, ex]);
@@ -336,7 +357,7 @@ export default function LiveMap() {
           trailOuter[i].setLatLngs([]); trailInner[i].setLatLngs([]);
           routeLines[i].setStyle({ opacity: 0 });
           substrips[i].setStyle({ opacity: 0, fillOpacity: 0 });
-          states[i] = { state: up ? "camera" : "idle", pos: [ex, ey], drawn: 0, prog: 0, spray: false, speed: 6.5 };
+          states[i] = { state: estate, pos: [ex, ey], drawn: 0, prog: 0, spray: false, speed: estate === "rth" ? 9 : 6.5 };
           continue; // Eye is excluded from coverage math
         }
 

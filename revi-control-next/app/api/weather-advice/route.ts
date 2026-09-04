@@ -1,6 +1,30 @@
 import { NextResponse } from "next/server";
 import { computeAdvice, VERDICT_HE, type WxIn, type Advice } from "@/lib/weather";
 
+// GET /api/weather-advice → health check. Reports whether the key is configured
+// and, with ?live=1, makes a tiny real call to confirm it actually works.
+// Never returns the key itself.
+export async function GET(req: Request) {
+  const key = process.env.ANTHROPIC_API_KEY;
+  const present = !!key;
+  const live = new URL(req.url).searchParams.get("live") === "1";
+  if (!present) return NextResponse.json({ keyPresent: false, model: "claude-sonnet-5", note: "ANTHROPIC_API_KEY לא מוגדר — היועץ עובד במצב מחושב" });
+  if (!live) return NextResponse.json({ keyPresent: true, model: "claude-sonnet-5", note: "מפתח קיים. הוסף ?live=1 לבדיקת חיבור אמיתית" });
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({ model: "claude-sonnet-5", max_tokens: 16, messages: [{ role: "user", content: "reply OK" }] }),
+    });
+    const ok = r.ok;
+    let detail = "";
+    if (!ok) { try { detail = JSON.stringify((await r.json())?.error ?? {}); } catch { /* noop */ } }
+    return NextResponse.json({ keyPresent: true, apiWorks: ok, status: r.status, model: "claude-sonnet-5", detail });
+  } catch (e: any) {
+    return NextResponse.json({ keyPresent: true, apiWorks: false, error: String(e?.message ?? e) });
+  }
+}
+
 // POST { scenario, windSpeed, windDir, temp, humidity, areaDunam }
 // → Advice JSON. Deterministic math always fills the numbers; Claude enriches the
 // Hebrew reasons + operator tips when ANTHROPIC_API_KEY is set. Never throws to
