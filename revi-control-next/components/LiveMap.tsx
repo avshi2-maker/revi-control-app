@@ -29,6 +29,7 @@ export default function LiveMap() {
   const [reportOpen, setReportOpen] = useState(false);
   const [hasEye, setHasEye] = useState(false);
   const [query, setQuery] = useState("");
+  const [crew, setCrew] = useState<{ op: string; sup: string }>({ op: "", sup: "" });
 
   useEffect(() => {
     const RECORD = /[?&]record=1/.test(location.search);
@@ -54,6 +55,8 @@ export default function LiveMap() {
     const eyeIdx = droneNums.indexOf(eyeNumRaw); // -1 = no camera drone
     setHasEye(eyeIdx >= 0);
     setQuery(location.search);
+    const crewParams = new URLSearchParams(location.search);
+    setCrew({ op: crewParams.get("op") || "", sup: crewParams.get("sup") || "" });
     setPad(new URLSearchParams(location.search).get("pad") === "boat" || ocean ? "boat" : "ground");
     const colorFor = (k: number) => COLORS[k] ?? `hsl(${(k * 47) % 360} 85% 62%)`;
 
@@ -227,7 +230,8 @@ export default function LiveMap() {
     const onHandle = () => {
       const sw = swH.getLatLng(), ne = neH.getLatLng();
       Z = { w: Math.min(sw.lng, ne.lng), e: Math.max(sw.lng, ne.lng), s: Math.min(sw.lat, ne.lat), n: Math.max(sw.lat, ne.lat) };
-      relayout(); syncHandles(); updateCoordBox(); drawCrab();
+      // Don't reposition the corners mid-drag (fights Leaflet); only the center grip.
+      relayout(); moveH.setLatLng([(Z.s + Z.n) / 2, (Z.w + Z.e) / 2]); updateCoordBox(); drawCrab();
     };
     swH.on("drag", onHandle); neH.on("drag", onHandle);
     let zmc = { lat: (Z.s + Z.n) / 2, lng: (Z.w + Z.e) / 2 };
@@ -695,6 +699,8 @@ export default function LiveMap() {
         scenario={isOcean ? "ocean" : "land"}
         droneCount={droneCount}
         pad={pad}
+        operator={crew.op}
+        supervisor={crew.sup}
       />
     </div>
   );

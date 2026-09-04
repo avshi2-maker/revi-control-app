@@ -9,15 +9,18 @@ export type MissionReportProps = {
   scenario: "land" | "ocean";
   droneCount: number;
   pad: "ground" | "boat";
+  operator?: string;
+  supervisor?: string;
 };
 
-export default function MissionReport({ open, onClose, scenario, droneCount, pad }: MissionReportProps) {
+export default function MissionReport({ open, onClose, scenario, droneCount, pad, operator, supervisor }: MissionReportProps) {
   if (!open) return null;
   const ocean = scenario === "ocean";
   const ref = ocean ? REPORT.ocean : REPORT.land;
 
   const now = new Date();
-  const dateStr = now.toLocaleDateString("he-IL");
+  const p2 = (x: number) => String(x).padStart(2, "0");
+  const dateStr = `${p2(now.getDate())}/${p2(now.getMonth() + 1)}/${now.getFullYear()}`;
   const endStr = now.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
   // Start = end minus 1:48 (matches durationHM).
   const start = new Date(now.getTime() - (108 * 60 * 1000));
@@ -28,6 +31,8 @@ export default function MissionReport({ open, onClose, scenario, droneCount, pad
 
   const rows: [string, string][] = [
     ["סוג משימה", ocean ? "🌊 ריסוס בקטריאלי (ים)" : "🌿 ריסוס יבשתי"],
+    ["מפעיל", operator || "—"],
+    ["אחראי משמרת", supervisor || "—"],
     ["תאריך", dateStr],
     ["שעת התחלה", startStr],
     ["שעת סיום", endStr],

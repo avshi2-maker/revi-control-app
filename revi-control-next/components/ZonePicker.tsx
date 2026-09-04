@@ -51,23 +51,23 @@ export default function ZonePicker({
     const moveM = L.marker([(z.s + z.n) / 2, (z.w + z.e) / 2], { draggable: true, icon: handle("✥", "move") }).addTo(map);
 
     const emit = () => cbRef.current({ base: { ...b }, zone: { ...z } });
-    const redraw = () => {
-      rect.setBounds([[z.s, z.w], [z.n, z.e]]);
-      swM.setLatLng([z.s, z.w]); neM.setLatLng([z.n, z.e]);
-      moveM.setLatLng([(z.s + z.n) / 2, (z.w + z.e) / 2]);
-    };
+    const center = (): [number, number] => [(z.s + z.n) / 2, (z.w + z.e) / 2];
 
+    // Corner drag = resize. Never setLatLng the handle being dragged (that fights
+    // Leaflet's drag and snaps it back) — only the rect + the OTHER handles.
     swM.on("drag", (e: any) => {
       const p = e.target.getLatLng();
       z.s = Math.min(p.lat, z.n - 0.002);
       z.w = Math.min(p.lng, z.e - 0.002);
-      redraw();
+      rect.setBounds([[z.s, z.w], [z.n, z.e]]);
+      moveM.setLatLng(center());
     });
     neM.on("drag", (e: any) => {
       const p = e.target.getLatLng();
       z.n = Math.max(p.lat, z.s + 0.002);
       z.e = Math.max(p.lng, z.w + 0.002);
-      redraw();
+      rect.setBounds([[z.s, z.w], [z.n, z.e]]);
+      moveM.setLatLng(center());
     });
     let mc = { lat: (z.s + z.n) / 2, lng: (z.w + z.e) / 2 };
     moveM.on("dragstart", () => { mc = { lat: (z.s + z.n) / 2, lng: (z.w + z.e) / 2 }; });

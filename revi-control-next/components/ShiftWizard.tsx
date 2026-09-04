@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import type { Geo } from "@/components/ZonePicker";
@@ -57,6 +57,19 @@ export default function ShiftWizard() {
   const [weatherOk, setWeatherOk] = useState(false);
   const [weightOk, setWeightOk] = useState(true);
   const [permit, setPermit] = useState({ airspace: false, tank: false });
+  const [operator, setOperator] = useState("");
+  const [supervisor, setSupervisor] = useState("");
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const t = () => setNow(new Date());
+    t();
+    const id = setInterval(t, 1000);
+    return () => clearInterval(id);
+  }, []);
+  const p2 = (x: number) => String(x).padStart(2, "0");
+  const clockTime = now ? `${p2(now.getHours())}:${p2(now.getMinutes())}:${p2(now.getSeconds())}` : "--:--:--";
+  const clockDate = now ? `${p2(now.getDate())}/${p2(now.getMonth() + 1)}/${now.getFullYear()}` : "--/--/----";
 
   const isOcean = scenario === "ocean";
   const permitOk = permit.airspace && permit.tank;
@@ -104,6 +117,8 @@ export default function ShiftWizard() {
     const q = [...drones].sort((a, b) => a - b).join(",");
     const params = new URLSearchParams({ drones: q, pad, algo });
     if (isOcean) params.set("scenario", "ocean");
+    if (operator.trim()) params.set("op", operator.trim());
+    if (supervisor.trim()) params.set("sup", supervisor.trim());
     if (eye && drones.includes(eye)) params.set("eye", String(eye));
     if (geo) {
       const b = geo.base, z = geo.zone;
@@ -116,7 +131,14 @@ export default function ShiftWizard() {
   return (
     <div className="wz">
       <div className="wz-top">
-        <div className="wz-brand"><div className="wz-logo" /><b>Revi-Control</b><span>אשף פתיחת משמרת</span></div>
+        <div className="wz-hdrbar">
+          <div className="wz-brand"><div className="wz-logo" /><b>Revi-Control</b><span>אשף פתיחת משמרת</span></div>
+          <div className="wz-names">
+            <input className="wz-name" placeholder="מפעיל" value={operator} onChange={e => setOperator(e.target.value)} />
+            <input className="wz-name" placeholder="אחראי משמרת" value={supervisor} onChange={e => setSupervisor(e.target.value)} />
+          </div>
+          <div className="wz-clock"><span className="wz-clk-t">{clockTime}</span><span className="wz-clk-d">{clockDate}</span></div>
+        </div>
         <div className="wz-steps">
           {STEPS.map((s, i) => (
             <div key={s} className={`wz-step ${i === step ? "on" : ""} ${i < step ? "done" : ""}`}>
@@ -234,6 +256,7 @@ export default function ShiftWizard() {
             <h2>סיכום משימה</h2>
             <div className="wz-sum">
               <div><span>סוג משימה</span><b>{isOcean ? "🌊 ריסוס בקטריאלי (ים)" : "🌿 ריסוס יבשתי"}</b></div>
+              <div><span>מפעיל / אחראי משמרת</span><b>{operator || "—"} / {supervisor || "—"}</b></div>
               <div><span>מזג אוויר</span><b style={{ color: "var(--good)" }}>✓ אושר</b></div>
               <div><span>משקל ואיזון</span><b style={{ color: "var(--good)" }}>✓ תקין</b></div>
               <div><span>נקודת שיגור</span><b>{pad === "boat" ? "⛵ ספינה" : "🏟 קרקע"}</b></div>
