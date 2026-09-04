@@ -1,9 +1,8 @@
-"use client";
-import dynamic from "next/dynamic";
+import CockpitClient from "@/components/CockpitClient";
 
-// Leaflet touches window at import time, so load the map only on the client.
-const LiveMap = dynamic(() => import("@/components/LiveMap"), { ssr: false });
-
+// Root is the operator entry: the shift wizard (and the live cockpit once launched).
+// The raw live map stays available at /map.
+export const metadata = { title: "Revi-Control — חדר בקרה" };
 export default function Page() {
-      return <LiveMap />;
+  return <CockpitClient />;
 }
