@@ -1,6 +1,19 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import type { Geo } from "@/components/ZonePicker";
+
+// Leaflet touches window at import — client only.
+const ZonePicker = dynamic(() => import("@/components/ZonePicker"), { ssr: false });
+
+// dunam estimate for a lat/lng bounding box (1 dunam = 1000 m²).
+function dunam(z: Geo["zone"]) {
+  const midLat = (z.s + z.n) / 2;
+  const wM = (z.e - z.w) * 111320 * Math.cos((midLat * Math.PI) / 180);
+  const hM = (z.n - z.s) * 111320;
+  return Math.max(0, Math.round((wM * hM) / 1000));
+}
 
 // 7-step shift wizard. Holds all mission config in React state, then on GO
 // navigates to /cockpit?scenario=..&drones=..&pad=..&algo=.. — LiveMap reads
@@ -33,12 +46,17 @@ export default function ShiftWizard() {
   const [pad, setPad] = useState<Pad>("ground");
   const [drones, setDrones] = useState<number[]>([]);
   const [algo, setAlgo] = useState<Algo>("boustro");
+  const [geo, setGeo] = useState<Geo | null>(null);
   const [permit, setPermit] = useState({ weather: false, airspace: false, tank: false });
 
   const isOcean = scenario === "ocean";
   const permitOk = permit.weather && permit.airspace && permit.tank;
 
-  const pickScenario = (s: Scenario) => { setScenario(s); setPad(s === "ocean" ? "boat" : "ground"); };
+  const pickScenario = (s: Scenario) => {
+    setScenario(s);
+    setPad(s === "ocean" ? "boat" : "ground");
+    setGeo(null); // geometry differs per scenario — repick on the map
+  };
   const toggleDrone = (n: number, ok: boolean) => {
     if (!ok) return;
     setDrones(p => p.includes(n) ? p.filter(x => x !== n) : [...p, n]);
@@ -59,6 +77,11 @@ export default function ShiftWizard() {
     const q = [...drones].sort((a, b) => a - b).join(",");
     const params = new URLSearchParams({ drones: q, pad, algo });
     if (isOcean) params.set("scenario", "ocean");
+    if (geo) {
+      const b = geo.base, z = geo.zone;
+      params.set("base", `${b.lng.toFixed(5)},${b.lat.toFixed(5)}`);
+      params.set("zone", `${z.w.toFixed(5)},${z.e.toFixed(5)},${z.s.toFixed(5)},${z.n.toFixed(5)}`);
+    }
     router.push(`/cockpit?${params.toString()}`);
   };
 
@@ -115,7 +138,7 @@ export default function ShiftWizard() {
         {/* 3 — Map + pad */}
         {step === 2 && (
           <div className="wz-pane">
-            <h2>נקודת שיגור</h2>
+            <h2>נקודת שיגור ואזור ריסוס</h2>
             <div className="wz-cards">
               <button className={`wz-card ${pad === "ground" ? "on" : ""}`} onClick={() => setPad("ground")}>
                 <div className="wz-ico">🏟</div><b>קרקע</b><p>מנחת יבשתי · שיגור ונחיתה סטנדרטיים</p>
@@ -124,7 +147,13 @@ export default function ShiftWizard() {
                 <div className="wz-ico">⛵</div><b>ספינה</b><p>שיגור מספינה בים · חד-כיווני במשימת ים</p>
               </button>
             </div>
-            <p className="wz-note">את גבולות אזור הריסוס ואת מיקום ה{pad === "boat" ? "ספינה" : "בסיס"} ניתן לגרור על המפה החיה לאחר השיגור.</p>
+            <div className="wz-mapwrap">
+              <ZonePicker scenario={scenario} value={geo} onChange={setGeo} />
+              <div className="wz-maptag">
+                גרור את <b>{pad === "boat" ? "⛵ הספינה" : "H הבסיס"}</b> ואת פינות <b>SW / NE</b> לעיצוב אזור הריסוס
+                {geo && <span className="wz-area"> · שטח נבחר: <b>{dunam(geo.zone).toLocaleString("he-IL")} דונם</b></span>}
+              </div>
+            </div>
           </div>
         )}
 
@@ -162,6 +191,7 @@ export default function ShiftWizard() {
               <div><span>נקודת שיגור</span><b>{pad === "boat" ? "⛵ ספינה" : "🏟 קרקע"}</b></div>
               <div><span>רחפנים</span><b>{drones.length} · {[...drones].sort((a, b) => a - b).map(n => "D" + n).join(", ") || "—"}</b></div>
               <div><span>אלגוריתם</span><b>{ALGOS.find(a => a.id === algo)?.he}</b></div>
+              <div><span>אזור ריסוס</span><b>{geo ? `${dunam(geo.zone).toLocaleString("he-IL")} דונם` : "ברירת מחדל"}</b></div>
               <div><span>אישורים</span><b style={{ color: "var(--good)" }}>✓ הושלמו</b></div>
             </div>
           </div>

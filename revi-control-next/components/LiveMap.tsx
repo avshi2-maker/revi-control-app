@@ -44,8 +44,23 @@ export default function LiveMap() {
     let base: Pt = [activeGEO.base.lng, activeGEO.base.lat];
     let Z = { ...activeGEO.zone }; // { w, e, s, n } — mutable so corners can reshape it
 
+    // Optional geometry override from the wizard zone-picker:
+    //   ?base=lng,lat  &  zone=w,e,s,n
+    const qp = new URLSearchParams(location.search);
+    const nums = (s: string | null, k: number) => {
+      const a = (s ?? "").split(",").map(Number);
+      return a.length === k && a.every(Number.isFinite) ? a : null;
+    };
+    const baseP = nums(qp.get("base"), 2);
+    const zoneP = nums(qp.get("zone"), 4);
+    if (baseP) base = [baseP[0], baseP[1]];
+    if (zoneP) Z = { w: zoneP[0], e: zoneP[1], s: zoneP[2], n: zoneP[3] };
+    const viewCenter: [number, number] = zoneP
+      ? [(Z.s + Z.n) / 2, (Z.w + Z.e) / 2]
+      : activeGEO.center;
+
     const map = L.map("map", { zoomControl: true, attributionControl: true, preferCanvas: true })
-      .setView(activeGEO.center, activeGEO.zoom);
+      .setView(viewCenter, activeGEO.zoom);
     L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       maxZoom: 19,
       attribution: ocean
