@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import type { Geo } from "@/components/ZonePicker";
+import WeatherStep from "@/components/WeatherStep";
 
 // Leaflet touches window at import — client only.
 const ZonePicker = dynamic(() => import("@/components/ZonePicker"), { ssr: false });
@@ -15,7 +16,7 @@ function dunam(z: Geo["zone"]) {
   return Math.max(0, Math.round((wM * hM) / 1000));
 }
 
-// 7-step shift wizard. Holds all mission config in React state, then on GO
+// 8-step shift wizard. Holds all mission config in React state, then on GO
 // navigates to /cockpit?scenario=..&drones=..&pad=..&algo=.. — LiveMap reads
 // those params from location.search and mounts inside the cockpit shell.
 
@@ -31,7 +32,7 @@ function avail(n: number) {
 }
 const FLEET = Array.from({ length: 50 }, (_, i) => avail(i + 1));
 
-const STEPS = ["תרחיש", "רחפנים", "מפה + שיגור", "אישור", "אלגוריתם", "סיכום", "שיגור"];
+const STEPS = ["תרחיש", "מזג אוויר", "רחפנים", "מפה + שיגור", "אישור", "אלגוריתם", "סיכום", "שיגור"];
 
 const ALGOS: { id: Algo; he: string; desc: string }[] = [
   { id: "boustro", he: "מעברים מקבילים", desc: "כיסוי שורה-אחר-שורה (בוסטרופדון) — יעיל לשטח מלבני" },
@@ -48,34 +49,38 @@ export default function ShiftWizard() {
   const [algo, setAlgo] = useState<Algo>("boustro");
   const [eye, setEye] = useState<number | null>(null);
   const [geo, setGeo] = useState<Geo | null>(null);
-  const [permit, setPermit] = useState({ weather: false, airspace: false, tank: false });
+  const [weatherOk, setWeatherOk] = useState(false);
+  const [permit, setPermit] = useState({ airspace: false, tank: false });
 
   const isOcean = scenario === "ocean";
-  const permitOk = permit.weather && permit.airspace && permit.tank;
+  const permitOk = permit.airspace && permit.tank;
+  const LAST = STEPS.length - 1; // 7
 
   const pickScenario = (s: Scenario) => {
     setScenario(s);
     setPad(s === "ocean" ? "boat" : "ground");
-    setGeo(null); // geometry differs per scenario — repick on the map
+    setGeo(null);          // geometry differs per scenario — repick on the map
+    setWeatherOk(false);   // new area → re-run the advisor
   };
   const toggleDrone = (n: number, ok: boolean) => {
     if (!ok) return;
     setDrones(p => {
       const next = p.includes(n) ? p.filter(x => x !== n) : [...p, n];
-      if (!next.includes(n) && eye === n) setEye(null); // deselecting the Eye clears it
+      if (!next.includes(n) && eye === n) setEye(null);
       return next;
     });
   };
 
-  // Per-step gate for the Next button.
+  // Per-step gate for the Next button (indexed by step).
   const canNext = [
-    true,                    // scenario always chosen
-    drones.length > 0,       // at least one drone
-    true,                    // pad always chosen
-    permitOk,                // all clearances
-    true,                    // algo always chosen
-    true,                    // summary
-    true,
+    true,               // 0 scenario
+    weatherOk,          // 1 weather — must confirm/abort
+    drones.length > 0,  // 2 drones
+    true,               // 3 map + pad
+    permitOk,           // 4 clearances
+    true,               // 5 algorithm
+    true,               // 6 summary
+    true,               // 7 launch
   ][step];
 
   const launch = () => {
@@ -105,7 +110,7 @@ export default function ShiftWizard() {
       </div>
 
       <div className="wz-body">
-        {/* 1 — Scenario */}
+        {/* 0 — Scenario */}
         {step === 0 && (
           <div className="wz-pane">
             <h2>בחר סוג משימה</h2>
@@ -122,8 +127,13 @@ export default function ShiftWizard() {
           </div>
         )}
 
-        {/* 2 — Drones */}
+        {/* 1 — Weather + AI flight advisor */}
         {step === 1 && (
+          <WeatherStep scenario={scenario} confirmed={weatherOk} onConfirm={setWeatherOk} />
+        )}
+
+        {/* 2 — Drones */}
+        {step === 2 && (
           <div className="wz-pane">
             <h2>בחר רחפנים <span className="wz-badge">{drones.length} נבחרו</span></h2>
             <div className="wz-fleet">
@@ -152,7 +162,7 @@ export default function ShiftWizard() {
         )}
 
         {/* 3 — Map + pad */}
-        {step === 2 && (
+        {step === 3 && (
           <div className="wz-pane">
             <h2>נקודת שיגור ואזור ריסוס</h2>
             <div className="wz-cards">
@@ -166,7 +176,7 @@ export default function ShiftWizard() {
             <div className="wz-mapwrap">
               <ZonePicker scenario={scenario} value={geo} onChange={setGeo} />
               <div className="wz-maptag">
-                גרור את <b>{pad === "boat" ? "⛵ הספינה" : "H הבסיס"}</b> ואת פינות <b>SW / NE</b> לעיצוב אזור הריסוס
+                גרור את <b>{pad === "boat" ? "⛵ הספינה" : "H הבסיס"}</b>, את פינות <b>SW / NE</b> לשינוי גודל, או את <b>מרכז המלבן</b> להזזת האזור
                 {geo && <span className="wz-area"> · שטח נבחר: <b>{dunam(geo.zone).toLocaleString("he-IL")} דונם</b></span>}
               </div>
             </div>
@@ -174,18 +184,18 @@ export default function ShiftWizard() {
         )}
 
         {/* 4 — Permission */}
-        {step === 3 && (
+        {step === 4 && (
           <div className="wz-pane">
             <h2>אישורי שיגור</h2>
-            <label className="wz-chk"><input type="checkbox" checked={permit.weather} onChange={e => setPermit(p => ({ ...p, weather: e.target.checked }))} /> תנאי מזג אוויר נבדקו ומתאימים</label>
             <label className="wz-chk"><input type="checkbox" checked={permit.airspace} onChange={e => setPermit(p => ({ ...p, airspace: e.target.checked }))} /> המרחב האווירי פנוי ומאושר</label>
             <label className="wz-chk"><input type="checkbox" checked={permit.tank} onChange={e => setPermit(p => ({ ...p, tank: e.target.checked }))} /> מיכלי התרסיס מלאים ותקינים</label>
+            <p className="wz-note">✓ תנאי מזג האוויר כבר אושרו בשלב 2.</p>
             {isOcean && <div className="wz-warn">⚠ משימת ים — הרחפנים לא יחזרו. עלות המתכלים תיזקף לחוזה.</div>}
           </div>
         )}
 
         {/* 5 — Algorithm */}
-        {step === 4 && (
+        {step === 5 && (
           <div className="wz-pane">
             <h2>אלגוריתם כיסוי</h2>
             <div className="wz-algos">
@@ -199,11 +209,12 @@ export default function ShiftWizard() {
         )}
 
         {/* 6 — Summary */}
-        {step === 5 && (
+        {step === 6 && (
           <div className="wz-pane">
             <h2>סיכום משימה</h2>
             <div className="wz-sum">
               <div><span>סוג משימה</span><b>{isOcean ? "🌊 ריסוס בקטריאלי (ים)" : "🌿 ריסוס יבשתי"}</b></div>
+              <div><span>מזג אוויר</span><b style={{ color: "var(--good)" }}>✓ אושר</b></div>
               <div><span>נקודת שיגור</span><b>{pad === "boat" ? "⛵ ספינה" : "🏟 קרקע"}</b></div>
               <div><span>רחפנים</span><b>{drones.length} · {[...drones].sort((a, b) => a - b).map(n => "D" + n).join(", ") || "—"}</b></div>
               <div><span>רחפן צילום</span><b>{eye ? `📹 D${eye}` : "ללא"}</b></div>
@@ -215,7 +226,7 @@ export default function ShiftWizard() {
         )}
 
         {/* 7 — Launch */}
-        {step === 6 && (
+        {step === 7 && (
           <div className="wz-pane wz-launch">
             <div className="wz-golauncher">
               <div className="wz-ico big">{isOcean ? "🌊" : "🌿"}</div>
@@ -230,7 +241,7 @@ export default function ShiftWizard() {
       <div className="wz-foot">
         <button className="wz-nav" disabled={step === 0} onClick={() => setStep(s => s - 1)}>→ הקודם</button>
         <a className="wz-nav ghost" href="/">חזרה למפה</a>
-        {step < 6 && (
+        {step < LAST && (
           <button className="wz-nav primary" disabled={!canNext} onClick={() => setStep(s => s + 1)}>הבא ←</button>
         )}
       </div>

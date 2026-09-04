@@ -422,3 +422,51 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
   color:var(--ink);text-decoration:none;font-size:13px;font-weight:700;padding:11px;border-radius:12px}
 .st-back:hover{border-color:var(--accent);color:var(--accent)}
 @media(max-width:760px){.st-body{flex-direction:column}.st-rail{width:auto;flex:none;border-inline-start:0;border-top:1px solid var(--line)}}
+
+/* ── Zone handles (live map + picker) ── */
+.zp-handle,.zh{background:transparent!important;border:0!important}
+.zp-handle{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;
+  color:#d6ecff;background:rgba(8,20,32,.9)!important;border:1.5px solid var(--accent)!important;
+  border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:grab}
+.zp-handle.base{border-color:#ffd54a!important;font-size:14px}
+.zp-handle.move{border-radius:50%;border-color:#fff!important;font-size:15px;background:rgba(8,20,32,.75)!important}
+.zh-corner{width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;color:#04131f;background:#22d3ee;border:2px solid #06202e;
+  border-radius:7px;box-shadow:0 0 8px #22d3ee;cursor:nwse-resize}
+.zh-move{width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:#06202e;background:#fff;border:2px solid #06202e;border-radius:50%;
+  box-shadow:0 2px 10px rgba(0,0,0,.5);cursor:move}
+
+/* ── Weather advisor step ── */
+.wx-load{padding:26px;text-align:center;color:var(--muted);font-size:14px}
+.wx-verdict{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 18px;border-radius:14px;
+  border:1.5px solid var(--line);background:var(--panel2);margin-bottom:16px}
+.wx-verdict.go{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.08)}
+.wx-verdict.caution{border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.08)}
+.wx-verdict.nogo{border-color:rgba(248,113,113,.55);background:rgba(248,113,113,.1)}
+.wx-v-badge{font-size:16px;font-weight:800;padding:6px 14px;border-radius:22px}
+.wx-verdict.go .wx-v-badge{color:var(--good);background:rgba(52,211,153,.16)}
+.wx-verdict.caution .wx-v-badge{color:var(--warn);background:rgba(245,158,11,.16)}
+.wx-verdict.nogo .wx-v-badge{color:var(--bad);background:rgba(248,113,113,.18)}
+.wx-v-head{font-size:14.5px;font-weight:700;flex:1;min-width:180px;line-height:1.5}
+.wx-src{font-size:11px;color:var(--muted);font-weight:700}
+.wx-chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.wx-chip{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:7px 14px;
+  font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums}
+.wx-chip b{color:var(--accent)}
+.wx-block{margin-bottom:16px}
+.wx-block h3{font-size:13px;font-weight:800;color:var(--muted);margin-bottom:9px}
+.wx-list{list-style:none;display:flex;flex-direction:column;gap:7px}
+.wx-list li{font-size:13.5px;line-height:1.55;padding:9px 12px;background:var(--panel2);
+  border:1px solid var(--line);border-radius:10px;position:relative;padding-inline-start:26px}
+.wx-list li:before{content:"•";position:absolute;inset-inline-start:11px;color:var(--accent);font-weight:800}
+.wx-list.tips li:before{content:"✈";font-size:11px;top:10px}
+.wx-pattern{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:12px;overflow:hidden}
+.wx-pattern>div{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);padding:11px 14px}
+.wx-pattern span{font-size:12.5px;color:var(--muted)}
+.wx-pattern b{font-size:15px;color:var(--accent);font-variant-numeric:tabular-nums}
+.wx-pattern .wx-axis{grid-column:1 / -1}
+.wx-pattern .wx-axis b{font-size:13px;color:var(--ink);text-align:end}
+.wx-confirm{margin-top:6px}
+.wx-confirm.nogo{border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.08)}
+.wx-confirm.caution{border-color:rgba(245,158,11,.45)}

@@ -38,21 +38,24 @@ export default function ZonePicker({
     let b = { ...init.base };
 
     const rect = L.rectangle([[z.s, z.w], [z.n, z.e]], {
-      color: rectColor, weight: 2, fillOpacity: 0.12, dashArray: "6 5",
+      color: rectColor, weight: 2, fillOpacity: 0.14, dashArray: "6 5",
     }).addTo(map);
 
-    const handle = (html: string) =>
-      L.divIcon({ className: "zp-handle", html, iconSize: [26, 26], iconAnchor: [13, 13] });
+    const handle = (html: string, cls = "") =>
+      L.divIcon({ className: "zp-handle " + cls, html, iconSize: [30, 30], iconAnchor: [15, 15] });
 
     const swM = L.marker([z.s, z.w], { draggable: true, icon: handle("SW") }).addTo(map);
     const neM = L.marker([z.n, z.e], { draggable: true, icon: handle("NE") }).addTo(map);
-    const baseM = L.marker([b.lat, b.lng], {
-      draggable: true,
-      icon: handle(ocean ? "⛵" : "H"),
-    }).addTo(map);
+    const baseM = L.marker([b.lat, b.lng], { draggable: true, icon: handle(ocean ? "⛵" : "H", "base") }).addTo(map);
+    // Center grip — drag to MOVE the whole zone (keeps its size).
+    const moveM = L.marker([(z.s + z.n) / 2, (z.w + z.e) / 2], { draggable: true, icon: handle("✥", "move") }).addTo(map);
 
     const emit = () => cbRef.current({ base: { ...b }, zone: { ...z } });
-    const redraw = () => rect.setBounds([[z.s, z.w], [z.n, z.e]]);
+    const redraw = () => {
+      rect.setBounds([[z.s, z.w], [z.n, z.e]]);
+      swM.setLatLng([z.s, z.w]); neM.setLatLng([z.n, z.e]);
+      moveM.setLatLng([(z.s + z.n) / 2, (z.w + z.e) / 2]);
+    };
 
     swM.on("drag", (e: any) => {
       const p = e.target.getLatLng();
@@ -66,8 +69,18 @@ export default function ZonePicker({
       z.e = Math.max(p.lng, z.w + 0.002);
       redraw();
     });
+    let mc = { lat: (z.s + z.n) / 2, lng: (z.w + z.e) / 2 };
+    moveM.on("dragstart", () => { mc = { lat: (z.s + z.n) / 2, lng: (z.w + z.e) / 2 }; });
+    moveM.on("drag", (e: any) => {
+      const p = e.target.getLatLng();
+      const dLat = p.lat - mc.lat, dLng = p.lng - mc.lng;
+      mc = { lat: p.lat, lng: p.lng };
+      z.s += dLat; z.n += dLat; z.w += dLng; z.e += dLng;
+      rect.setBounds([[z.s, z.w], [z.n, z.e]]);
+      swM.setLatLng([z.s, z.w]); neM.setLatLng([z.n, z.e]);
+    });
     baseM.on("drag", (e: any) => { const p = e.target.getLatLng(); b = { lng: p.lng, lat: p.lat }; });
-    swM.on("dragend", emit); neM.on("dragend", emit); baseM.on("dragend", emit);
+    swM.on("dragend", emit); neM.on("dragend", emit); baseM.on("dragend", emit); moveM.on("dragend", emit);
 
     // Emit initial geometry once so the wizard has a value even without dragging.
     emit();

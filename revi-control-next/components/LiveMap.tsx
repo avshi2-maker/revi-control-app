@@ -173,15 +173,25 @@ export default function LiveMap() {
       buildLanes();
     }
     baseMarker.on("drag", (e: any) => { base = [e.latlng.lng, e.latlng.lat]; updateCoordBox(); });
-    const handleIcon = L.divIcon({ className: "", html: `<div style="width:16px;height:16px;border-radius:50%;background:#22d3ee;border:2px solid #06202e;box-shadow:0 0 8px #22d3ee;cursor:move"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] });
-    const swH = L.marker([Z.s, Z.w], { icon: handleIcon, draggable: true, zIndexOffset: 600 }).addTo(map);
-    const neH = L.marker([Z.n, Z.e], { icon: handleIcon, draggable: true, zIndexOffset: 600 }).addTo(map);
+    const cornerIcon = (lbl: string) => L.divIcon({ className: "zh", html: `<div class="zh-corner">${lbl}</div>`, iconSize: [28, 28], iconAnchor: [14, 14] });
+    const moveIcon = L.divIcon({ className: "zh", html: `<div class="zh-move">✥</div>`, iconSize: [30, 30], iconAnchor: [15, 15] });
+    const swH = L.marker([Z.s, Z.w], { icon: cornerIcon("SW"), draggable: true, zIndexOffset: 600 }).addTo(map);
+    const neH = L.marker([Z.n, Z.e], { icon: cornerIcon("NE"), draggable: true, zIndexOffset: 600 }).addTo(map);
+    const moveH = L.marker([(Z.s + Z.n) / 2, (Z.w + Z.e) / 2], { icon: moveIcon, draggable: true, zIndexOffset: 650 }).addTo(map);
+    const syncHandles = () => { swH.setLatLng([Z.s, Z.w]); neH.setLatLng([Z.n, Z.e]); moveH.setLatLng([(Z.s + Z.n) / 2, (Z.w + Z.e) / 2]); };
     const onHandle = () => {
       const sw = swH.getLatLng(), ne = neH.getLatLng();
       Z = { w: Math.min(sw.lng, ne.lng), e: Math.max(sw.lng, ne.lng), s: Math.min(sw.lat, ne.lat), n: Math.max(sw.lat, ne.lat) };
-      relayout(); updateCoordBox();
+      relayout(); syncHandles(); updateCoordBox();
     };
     swH.on("drag", onHandle); neH.on("drag", onHandle);
+    let zmc = { lat: (Z.s + Z.n) / 2, lng: (Z.w + Z.e) / 2 };
+    moveH.on("dragstart", () => { zmc = { lat: (Z.s + Z.n) / 2, lng: (Z.w + Z.e) / 2 }; });
+    moveH.on("drag", (e: any) => {
+      const p = e.latlng; const dLat = p.lat - zmc.lat, dLng = p.lng - zmc.lng; zmc = { lat: p.lat, lng: p.lng };
+      Z = { w: Z.w + dLng, e: Z.e + dLng, s: Z.s + dLat, n: Z.n + dLat };
+      relayout(); swH.setLatLng([Z.s, Z.w]); neH.setLatLng([Z.n, Z.e]); updateCoordBox();
+    });
     map.on("mousemove", (e: any) => { lastMouse = { lat: e.latlng.lat, lng: e.latlng.lng }; updateCoordBox(); });
     updateCoordBox();
 
