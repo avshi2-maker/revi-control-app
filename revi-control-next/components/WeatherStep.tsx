@@ -95,6 +95,9 @@ export default function WeatherStep({
               עודכן: <b>{obs.time}</b> · מקור: <b>Open-Meteo</b> · נמשך: {obs.fetched}
             </div>
           )}
+          <div className="wx-region">
+            📍 תחזית אזורית ל{scenario === "ocean" ? "ים תיכון מול אשדוד" : "עמק השרון"} · תיבדק מחדש לנקודת השיגור המדויקת לאחר מיקום הבסיס על המפה.
+          </div>
 
           <div className="wx-block">
             <h3>הערכת תנאים</h3>

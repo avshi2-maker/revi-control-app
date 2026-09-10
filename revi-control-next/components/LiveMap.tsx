@@ -8,6 +8,7 @@ import {
   batteryAt, tankAt, phaseText, fmtHM, fmtMS, type Pt,
 } from "@/lib/simulation";
 import MissionReport from "@/components/MissionReport";
+import CameraFeed from "@/components/CameraFeed";
 
 // Great-circle distance (km) between two [lng,lat] points.
 function kmBetween(a: Pt, b: Pt) {
@@ -28,6 +29,8 @@ export default function LiveMap() {
   const [pad, setPad] = useState<"ground" | "boat">("ground");
   const [reportOpen, setReportOpen] = useState(false);
   const [hasEye, setHasEye] = useState(false);
+  const [eyeNum, setEyeNum] = useState(0);
+  const [showFeed, setShowFeed] = useState(true);
   const [query, setQuery] = useState("");
   const [crew, setCrew] = useState<{ op: string; sup: string }>({ op: "", sup: "" });
 
@@ -54,6 +57,7 @@ export default function LiveMap() {
     const eyeNumRaw = parseInt(new URLSearchParams(location.search).get("eye") || "", 10);
     const eyeIdx = droneNums.indexOf(eyeNumRaw); // -1 = no camera drone
     setHasEye(eyeIdx >= 0);
+    setEyeNum(eyeIdx >= 0 ? eyeNumRaw : 0);
     setQuery(location.search);
     const crewParams = new URLSearchParams(location.search);
     setCrew({ op: crewParams.get("op") || "", sup: crewParams.get("sup") || "" });
@@ -513,7 +517,8 @@ export default function LiveMap() {
     };
     (async () => {
       try {
-        const center = activeGEO.center;
+        // Weather for the ACTUAL positioned zone center (not the regional default).
+        const center: [number, number] = [(Z.s + Z.n) / 2, (Z.w + Z.e) / 2];
         const r = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${center[0]}&longitude=${center[1]}&current=temperature_2m,windspeed_10m,winddirection_10m,relativehumidity_2m&windspeed_unit=ms&timezone=auto`
         );
@@ -644,6 +649,15 @@ export default function LiveMap() {
         <div id="phase"><span id="phaseTxt" /><span className="dotp" /></div>
         <div id="pausebadge">⏸ מושהה — מצב הדגמה</div>
         <div id="rtbwarn" className="rtbwarn" />
+        {hasEye && (
+          <div className={`camfeed ${showFeed ? "" : "min"}`}>
+            <div className="cf-bar">
+              <span>📹 שידור עין · D{eyeNum} <span className="cf-live">● LIVE</span></span>
+              <button onClick={() => setShowFeed(v => !v)} title={showFeed ? "מזער" : "הצג"}>{showFeed ? "—" : "▢"}</button>
+            </div>
+            {showFeed && <CameraFeed ocean={isOcean} sprayCount={Math.max(1, droneCount - 1)} label={`עין D${eyeNum}`} />}
+          </div>
+        )}
 
 
         <div className="overlay" id="titlecard">
