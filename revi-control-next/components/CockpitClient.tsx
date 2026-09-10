@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import ShiftWizard from "@/components/ShiftWizard";
 
 // Leaflet touches window at import time — client only.
@@ -16,12 +16,30 @@ function key(code: string, k: string) {
 
 function TransportBar({ onExit }: { onExit: () => void }) {
   const [playing, setPlaying] = useState(true);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    const onMission = (e: any) => { const d = !!e?.detail?.done; setDone(d); if (!d) setPlaying(true); };
+    window.addEventListener("revi:mission", onMission);
+    return () => window.removeEventListener("revi:mission", onMission);
+  }, []);
 
   const toggle = () => { key("Space", " "); setPlaying(p => !p); };
   const back = () => { key("ArrowLeft", "ArrowLeft"); setPlaying(false); };
   const fwd = () => { key("ArrowRight", "ArrowRight"); setPlaying(false); };
-  const restart = () => { key("KeyR", "r"); setPlaying(true); };
+  const restart = () => { key("KeyR", "r"); setDone(false); setPlaying(true); };
   const stop = () => { key("KeyR", "r"); setTimeout(() => { key("Space", " "); setPlaying(false); }, 30); };
+
+  // After the mission completes, drop the transport controls — just a slim bar.
+  if (done) {
+    return (
+      <div className="tp-bar done">
+        <span className="tp-donemsg">✓ המשימה הושלמה</span>
+        <button className="tp-btn" onClick={restart} title="הפעל שוב">⏮ הפעל שוב</button>
+        <button className="tp-exit" onClick={onExit}>↩ אשף חדש</button>
+      </div>
+    );
+  }
 
   return (
     <div className="tp-bar">

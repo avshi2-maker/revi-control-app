@@ -360,7 +360,17 @@ export default function LiveMap() {
       if (ocean && s >= T.spray[1]) p = "בקטריות הוזרקו · רחפנים נספו בים";
       if (p !== lastPhase) { lastPhase = p; g("phaseTxt").textContent = p; g("phase").classList.toggle("show", !!p); }
     }
-    function overlays(s: number) { g("titlecard").classList.toggle("hidden", s >= T.title[1]); g("endcard").classList.toggle("hidden", !(s >= T.end[0])); }
+    let lastDone = false;
+    function overlays(s: number) {
+      g("titlecard").classList.toggle("hidden", s >= T.title[1]);
+      const done = s >= T.end[0];
+      g("endcard").classList.toggle("hidden", !done);
+      if (done !== lastDone) {
+        lastDone = done;
+        const h = g("hint"); if (h) h.style.display = done ? "none" : "";
+        window.dispatchEvent(new CustomEvent("revi:mission", { detail: { done } }));
+      }
+    }
 
     let simTime = 0, playing = true, finished = false, lastTs: number | null = null, raf = 0;
     const scrubFill = () => g("scrub").querySelector(".fill") as HTMLElement;

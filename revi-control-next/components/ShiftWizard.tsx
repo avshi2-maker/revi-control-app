@@ -92,9 +92,11 @@ export default function ShiftWizard() {
   const perDroneDunam = Math.round(areaDunam / nSpray);
   const minBat = sprayDrones.length ? Math.min(...sprayDrones.map(battery)) : 100;
 
-  // Transit cost: distance base→zone. Land = out + back; sea = out only (expendable).
-  const zoneCenter: [number, number] = [(zoneForCalc.w + zoneForCalc.e) / 2, (zoneForCalc.s + zoneForCalc.n) / 2];
-  const baseDistKm = Math.round(kmBetween([baseForCalc.lng, baseForCalc.lat], zoneCenter) * 10) / 10;
+  // Transit cost: distance base→NEAREST EDGE of the zone (0 if inside it). Drones
+  // fly to the near edge and spray across from there, so edge — not centre — is right.
+  const nearLng = Math.min(Math.max(baseForCalc.lng, zoneForCalc.w), zoneForCalc.e);
+  const nearLat = Math.min(Math.max(baseForCalc.lat, zoneForCalc.s), zoneForCalc.n);
+  const baseDistKm = Math.round(kmBetween([baseForCalc.lng, baseForCalc.lat], [nearLng, nearLat]) * 10) / 10;
   const transitKm = baseDistKm * (isOcean ? 1 : 2);
   const budgetKm = DRONE_SPEC.rangeKmFull * (minBat / 100);
   const sprayKm = Math.max(0, budgetKm - transitKm);
