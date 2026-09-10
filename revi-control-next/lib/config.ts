@@ -47,11 +47,14 @@ export const DRONE_SPEC = {
   mtowKg: 90,         // max takeoff weight (warranty / safety limit)
   tankMaxL: 45,       // spray tank capacity
   sensorKitKg: 1.5,   // optional extra sensor package
-  coverageDunamFull: 400, // area one drone can cover on a full battery
+  coverageDunamFull: 60000, // area one drone can cover on a full battery (demo map scale)
   flightMinutesFull: 25,  // flight endurance on a full battery (minutes)
   rangeKmFull: 20,        // flight range on a full battery (km)
   returnReserve: 1.2,     // safety factor on the distance needed to get home
 };
+
+// Max spray-zone area allowed when resizing (dunam), per scenario — blocks oversizing.
+export const MAX_ZONE_DUNAM = { land: 150000, ocean: 650000 };
 
 // Ocean mission economics — expendable drones are a contracted, recognized cost.
 export const OCEAN_UNIT_COST = 4200; // ₪ per expendable drone lost at sea

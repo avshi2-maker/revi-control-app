@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { COLORS, NAMES, GEO, GEO_OCEAN, TIMELINE as T, STATE_HE, DRONE_SPEC } from "@/lib/config";
+import { COLORS, NAMES, GEO, GEO_OCEAN, TIMELINE as T, STATE_HE, DRONE_SPEC, MAX_ZONE_DUNAM } from "@/lib/config";
 import {
   DUR, clamp, ease, boustro, pathLen, pointAt, evalDrone,
   batteryAt, tankAt, phaseText, fmtHM, fmtMS, type Pt,
@@ -227,11 +227,23 @@ export default function LiveMap() {
     const neH = L.marker([Z.n, Z.e], { icon: cornerIcon("NE"), draggable: true, zIndexOffset: 600 }).addTo(map);
     const moveH = L.marker([(Z.s + Z.n) / 2, (Z.w + Z.e) / 2], { icon: moveIcon, draggable: true, zIndexOffset: 650 }).addTo(map);
     const syncHandles = () => { swH.setLatLng([Z.s, Z.w]); neH.setLatLng([Z.n, Z.e]); moveH.setLatLng([(Z.s + Z.n) / 2, (Z.w + Z.e) / 2]); };
+    const maxDunam = (MAX_ZONE_DUNAM as any)[ocean ? "ocean" : "land"] ?? 200000;
+    const sideM = Math.sqrt(maxDunam * 1000);
+    const maxLatSpan = sideM / 111320;
+    const maxLngSpanAt = (lat: number) => sideM / (111320 * Math.cos((lat * Math.PI) / 180));
     const onHandle = () => {
       const sw = swH.getLatLng(), ne = neH.getLatLng();
-      Z = { w: Math.min(sw.lng, ne.lng), e: Math.max(sw.lng, ne.lng), s: Math.min(sw.lat, ne.lat), n: Math.max(sw.lat, ne.lat) };
-      // Don't reposition the corners mid-drag (fights Leaflet); only the center grip.
-      relayout(); moveH.setLatLng([(Z.s + Z.n) / 2, (Z.w + Z.e) / 2]); updateCoordBox(); drawCrab();
+      let s = Math.min(sw.lat, ne.lat), n = Math.max(sw.lat, ne.lat);
+      let w = Math.min(sw.lng, ne.lng), e = Math.max(sw.lng, ne.lng);
+      let capped = false;
+      if (n - s > maxLatSpan) { const c = (s + n) / 2; s = c - maxLatSpan / 2; n = c + maxLatSpan / 2; capped = true; }
+      const mx = maxLngSpanAt((s + n) / 2);
+      if (e - w > mx) { const c = (w + e) / 2; w = c - mx / 2; e = c + mx / 2; capped = true; }
+      Z = { w, e, s, n };
+      relayout();
+      // On cap, snap the corners back to the limit; otherwise leave them under the cursor.
+      if (capped) { swH.setLatLng([Z.s, Z.w]); neH.setLatLng([Z.n, Z.e]); }
+      moveH.setLatLng([(Z.s + Z.n) / 2, (Z.w + Z.e) / 2]); updateCoordBox(); drawCrab();
     };
     swH.on("drag", onHandle); neH.on("drag", onHandle);
     let zmc = { lat: (Z.s + Z.n) / 2, lng: (Z.w + Z.e) / 2 };
