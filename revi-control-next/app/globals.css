@@ -145,10 +145,13 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
   background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.5);color:var(--warn);
   font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;opacity:0;transition:opacity .25s}
 #pausebadge.show{opacity:1}
-.navlink{position:absolute;top:14px;left:120px;z-index:700;background:rgba(13,22,34,.85);
-  border:1px solid var(--line);color:var(--accent);font-size:13px;font-weight:600;
-  padding:8px 15px;border-radius:22px;text-decoration:none;opacity:.75;transition:opacity .2s}
+/* Cockpit controls — stacked cleanly below the topbar on the right, out of the KPIs. */
+.navlink{position:absolute;top:64px;right:12px;left:auto;z-index:700;background:rgba(13,22,34,.9);
+  border:1px solid var(--line);color:var(--accent);font-size:12.5px;font-weight:700;
+  padding:7px 13px;border-radius:20px;text-decoration:none;opacity:.9;transition:opacity .2s}
 .navlink:hover{opacity:1}
+.crab-toggle{top:64px;right:12px;left:auto}
+.station-link{top:102px;right:12px;left:auto}
 /* leaflet drone/base markers */
 .drone-ic{position:relative}
 .drone-ic .body{width:22px;height:22px;transform-origin:center;transition:transform .1s linear}
@@ -492,10 +495,18 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
   width:20px;height:20px;cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center}
 .cf-live{color:#fb5a6a;font-size:10px;margin-inline-start:4px}
 .cf-inner{position:relative;height:170px}
-.cf-canvas{width:100%;height:100%;display:block}
-.cf-scan{position:absolute;inset:0;pointer-events:none;
+.cf-map{width:100%;height:100%}
+.cf-map .leaflet-control-container{display:none}
+.cf-cross{position:absolute;top:50%;left:50%;width:26px;height:26px;transform:translate(-50%,-50%);
+  pointer-events:none;border:1.4px solid rgba(255,213,74,.75);border-radius:50%;
+  box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+.cf-cross:before,.cf-cross:after{content:"";position:absolute;background:rgba(255,213,74,.75)}
+.cf-cross:before{left:50%;top:-7px;bottom:-7px;width:1.4px;transform:translateX(-50%)}
+.cf-cross:after{top:50%;left:-7px;right:-7px;height:1.4px;transform:translateY(-50%)}
+.cf-scan{position:absolute;inset:0;pointer-events:none;z-index:600;
   background:repeating-linear-gradient(0deg,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.14) 3px);
   animation:scan 5s linear infinite}
+.cf-cross,.cf-hud,.cf-cam{z-index:601}
 .cf-hud{position:absolute;top:6px;left:0;right:0;display:flex;justify-content:space-between;padding:0 8px;
   font:10.5px/1.3 "Segoe UI",monospace;color:#d6ecff;text-shadow:0 1px 2px #000;pointer-events:none}
 .cf-rec{color:#fb5a6a;font-weight:800;display:flex;align-items:center;gap:4px}

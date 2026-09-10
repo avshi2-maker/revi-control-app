@@ -31,6 +31,7 @@ export default function LiveMap() {
   const [hasEye, setHasEye] = useState(false);
   const [eyeNum, setEyeNum] = useState(0);
   const [showFeed, setShowFeed] = useState(true);
+  const [feedGeo, setFeedGeo] = useState<{ c: [number, number]; z: number }>({ c: [32.353, 34.898], z: 15 });
   const [query, setQuery] = useState("");
   const [crew, setCrew] = useState<{ op: string; sup: string }>({ op: "", sup: "" });
 
@@ -81,6 +82,8 @@ export default function LiveMap() {
     const viewCenter: [number, number] = zoneP
       ? [(Z.s + Z.n) / 2, (Z.w + Z.e) / 2]
       : activeGEO.center;
+    // Camera feed: close-up of the actual zone centre.
+    setFeedGeo({ c: [(Z.s + Z.n) / 2, (Z.w + Z.e) / 2], z: Math.min(17, activeGEO.zoom + 3) });
 
     const map = L.map("map", { zoomControl: true, attributionControl: true, preferCanvas: true })
       .setView(viewCenter, activeGEO.zoom);
@@ -655,7 +658,7 @@ export default function LiveMap() {
               <span>📹 שידור עין · D{eyeNum} <span className="cf-live">● LIVE</span></span>
               <button onClick={() => setShowFeed(v => !v)} title={showFeed ? "מזער" : "הצג"}>{showFeed ? "—" : "▢"}</button>
             </div>
-            {showFeed && <CameraFeed ocean={isOcean} sprayCount={Math.max(1, droneCount - 1)} label={`עין D${eyeNum}`} />}
+            {showFeed && <CameraFeed center={feedGeo.c} zoom={feedGeo.z} sprayCount={Math.max(1, droneCount - 1)} label={`עין D${eyeNum}`} />}
           </div>
         )}
 
@@ -708,10 +711,8 @@ export default function LiveMap() {
           <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z" /></svg>
           הפעל שוב
         </button>
-        <a className="navlink" href="/">← תצוגת סקיצה</a>
-        <a className="navlink navlink2" href="/select">← בחר רחפנים</a>
         {hasEye && (
-          <a className="navlink station-link" href={`/station${query}`} target="_blank" rel="noopener noreferrer">📹 תחנת פיקוד — שידור חי</a>
+          <a className="navlink station-link" href={`/station${query}`} target="_blank" rel="noopener noreferrer">📹 תחנת פיקוד</a>
         )}
         <button id="crabtoggle" className="navlink crab-toggle on">🌬 דפוס נגד סחף</button>
         <div id="crabbox" className="crabbox" />
