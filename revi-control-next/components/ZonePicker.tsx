@@ -84,7 +84,12 @@ export default function ZonePicker({
 
     // Emit initial geometry once so the wizard has a value even without dragging.
     emit();
-    setTimeout(() => map.invalidateSize(), 60);
+    // Zoom so the WHOLE zone + both corner handles are comfortably on screen —
+    // otherwise big zones push the corners off the edge and only "move" works.
+    setTimeout(() => {
+      map.invalidateSize();
+      map.fitBounds(rect.getBounds(), { padding: [55, 55], maxZoom: G.zoom + 2 });
+    }, 80);
 
     return () => { map.remove(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps

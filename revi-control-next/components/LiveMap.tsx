@@ -556,6 +556,8 @@ export default function LiveMap() {
     const onResize = () => setTimeout(() => map.invalidateSize(), 120);
     window.addEventListener("resize", onResize);
     setTimeout(() => map.invalidateSize(), 200);
+    // Frame the whole zone so the SW/NE resize corners stay on screen (not clipped).
+    setTimeout(() => { try { map.fitBounds([[Z.s, Z.w], [Z.n, Z.e]], { padding: [70, 70] }); } catch { /* noop */ } }, 320);
 
     reset();
     raf = requestAnimationFrame(frame);
