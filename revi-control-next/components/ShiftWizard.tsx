@@ -10,6 +10,14 @@ import { GEO, GEO_OCEAN, DRONE_SPEC } from "@/lib/config";
 // Deterministic per-drone battery (same rule as the fleet grid).
 function battery(n: number) { return 70 + ((n * 17 + 3) % 30); }
 
+// Great-circle distance (km) between two [lng,lat] points.
+function kmBetween(a: [number, number], b: [number, number]) {
+  const R = 6371, toR = Math.PI / 180;
+  const dLat = (b[1] - a[1]) * toR, dLng = (b[0] - a[0]) * toR;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * toR) * Math.cos(b[1] * toR) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
 // Leaflet touches window at import — client only.
 const ZonePicker = dynamic(() => import("@/components/ZonePicker"), { ssr: false });
 
@@ -75,15 +83,25 @@ export default function ShiftWizard() {
   const permitOk = permit.airspace && permit.tank;
   const LAST = STEPS.length - 1; // 8
 
-  // Battery / range feasibility: can the selected fleet cover the zone area?
+  // Battery / range feasibility: can the fleet cover the zone AFTER flying to it?
   const sprayDrones = drones.filter(n => n !== eye);
   const zoneForCalc = geo ? geo.zone : (isOcean ? GEO_OCEAN.zone : GEO.zone);
+  const baseForCalc = geo ? geo.base : (isOcean ? GEO_OCEAN.base : GEO.base);
   const areaDunam = dunam(zoneForCalc);
   const nSpray = Math.max(1, sprayDrones.length);
   const perDroneDunam = Math.round(areaDunam / nSpray);
   const minBat = sprayDrones.length ? Math.min(...sprayDrones.map(battery)) : 100;
-  const capMinDunam = Math.round(DRONE_SPEC.coverageDunamFull * (minBat / 100) * (isOcean ? 1.15 : 1));
-  const rangeOk = sprayDrones.length > 0 && perDroneDunam <= capMinDunam;
+
+  // Transit cost: distance base→zone. Land = out + back; sea = out only (expendable).
+  const zoneCenter: [number, number] = [(zoneForCalc.w + zoneForCalc.e) / 2, (zoneForCalc.s + zoneForCalc.n) / 2];
+  const baseDistKm = Math.round(kmBetween([baseForCalc.lng, baseForCalc.lat], zoneCenter) * 10) / 10;
+  const transitKm = baseDistKm * (isOcean ? 1 : 2);
+  const budgetKm = DRONE_SPEC.rangeKmFull * (minBat / 100);
+  const sprayKm = Math.max(0, budgetKm - transitKm);
+  // coverage per km of spray flight = coverageDunamFull / rangeKmFull
+  const capMinDunam = Math.round((DRONE_SPEC.coverageDunamFull / DRONE_SPEC.rangeKmFull) * sprayKm * (isOcean ? 1.15 : 1));
+  const reachOk = sprayKm > 0; // enough battery to reach (and, on land, return)
+  const rangeOk = sprayDrones.length > 0 && reachOk && perDroneDunam <= capMinDunam;
 
   const pickScenario = (s: Scenario) => {
     setScenario(s);
@@ -275,14 +293,18 @@ export default function ShiftWizard() {
               <div className="wz-range-grid">
                 <div><span>שטח כולל</span><b>{areaDunam.toLocaleString("he-IL")} דונם</b></div>
                 <div><span>רחפני ריסוס</span><b>{sprayDrones.length}</b></div>
+                <div><span>מרחק בסיס↔אזור</span><b>{baseDistKm} ק״מ {isOcean ? "(חד-כיווני)" : "(הלוך-חזור)"}</b></div>
                 <div><span>נדרש לרחפן</span><b>{perDroneDunam.toLocaleString("he-IL")} דונם</b></div>
-                <div><span>יכולת (סוללה {minBat}%)</span><b>{capMinDunam.toLocaleString("he-IL")} דונם</b></div>
+                <div><span>נצרך למעבר</span><b>{transitKm.toFixed(1)} ק״מ מתוך {budgetKm.toFixed(1)}</b></div>
+                <div><span>כיסוי אפקטיבי (סוללה {minBat}%)</span><b>{capMinDunam.toLocaleString("he-IL")} דונם</b></div>
               </div>
               {!rangeOk && (
                 <div className="wz-warn" style={{ marginTop: 10 }}>
                   {sprayDrones.length === 0
                     ? "לא נבחרו רחפני ריסוס."
-                    : `הרחפן החלש ביותר יכול לכסות ${capMinDunam.toLocaleString("he-IL")} דונם בלבד — הוסף רחפנים, הקטן את האזור, או המתן לטעינה.`}
+                    : !reachOk
+                      ? `הבסיס רחוק מדי (${baseDistKm} ק״מ) — אין מספיק סוללה ${isOcean ? "כדי להגיע לאזור" : "כדי להגיע ולחזור"}. קרב את נקודת השיגור או המתן לטעינה.`
+                      : `לאחר המעבר לאזור, כל רחפן יכול לכסות ${capMinDunam.toLocaleString("he-IL")} דונם בלבד — הוסף רחפנים, הקטן את האזור, או קרב את נקודת השיגור.`}
                 </div>
               )}
             </div>
