@@ -51,6 +51,8 @@ export const DRONE_SPEC = {
   flightMinutesFull: 25,  // flight endurance on a full battery (minutes)
   rangeKmFull: 20,        // flight range on a full battery (km)
   returnReserve: 1.2,     // safety factor on the distance needed to get home
+  minAltM: 2,             // manufacturer min spray altitude (m above target)
+  maxAltM: 12,            // manufacturer max spray altitude (m)
 };
 
 // Max spray-zone area allowed when resizing (dunam), per scenario — blocks oversizing.

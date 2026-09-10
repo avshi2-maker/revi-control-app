@@ -12,11 +12,13 @@ export default function WeatherStep({
   areaDunam,
   confirmed,
   onConfirm,
+  onRecAlt,
 }: {
   scenario: "land" | "ocean";
   areaDunam?: number;
   confirmed: boolean;
   onConfirm: (v: boolean) => void;
+  onRecAlt?: (m: number) => void;
 }) {
   const [advice, setAdvice] = useState<AdviceX | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +59,7 @@ export default function WeatherStep({
           }),
         });
         const a = await ar.json();
-        if (alive) { setAdvice(a); setLoading(false); }
+        if (alive) { setAdvice(a); setLoading(false); if (a?.recAltM && onRecAlt) onRecAlt(a.recAltM); }
       } catch {
         if (alive) { setErr(true); setLoading(false); }
       }
@@ -87,6 +89,7 @@ export default function WeatherStep({
             <div className="wx-chip">🌬 <b>{advice.windSpeed.toFixed(1)}</b> מ/ש · {advice.windDirHe}</div>
             <div className="wx-chip">🌡 <b>{advice.temp}</b>°C</div>
             <div className="wx-chip">💧 <b>{advice.humidity}</b>%</div>
+            <div className="wx-chip">🛩 גובה מומלץ <b>{advice.recAltM}</b> מ׳</div>
           </div>
 
           {obs && (

@@ -350,6 +350,20 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
 .wz-note{font-size:12.5px;color:var(--muted);margin-top:16px;line-height:1.6}
 .wz-warn{margin-top:16px;font-size:13px;color:var(--warn);font-weight:600;
   background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);padding:11px 14px;border-radius:12px}
+.wz-pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.wz-pick-b{background:var(--accent);color:#03111e;border:0;border-radius:10px;font-family:inherit;
+  font-size:13px;font-weight:800;padding:8px 16px;cursor:pointer}
+.wz-pick-b:hover{opacity:.88}
+.wz-pick-b.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.wz-pick-b:disabled{opacity:.35;cursor:not-allowed}
+.wz-pick-hint{font-size:12px;color:var(--muted);flex:1;min-width:200px}
+.wz-alt{margin-top:18px;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.wz-alt-top{display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-bottom:10px}
+.wz-alt-top b{color:var(--accent);font-size:16px}
+.wz-alt input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+.wz-alt-scale{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px}
+.wz-alt-reset{margin-inline-start:8px;background:transparent;border:1px solid var(--line);color:var(--accent);
+  border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;padding:3px 9px;cursor:pointer}
 .wz-fleet{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px}
 .wz-d{aspect-ratio:1;border-radius:10px;background:var(--panel2);border:1.5px solid var(--line);
   color:var(--ink);font-size:14px;font-weight:800;cursor:pointer;font-variant-numeric:tabular-nums;transition:all .15s}
@@ -499,6 +513,7 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
 .cf-inner{position:relative;height:170px}
 .cf-map{width:100%;height:100%}
 .cf-map .leaflet-control-container{display:none}
+.cf-waves{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:590}
 .cf-cross{position:absolute;top:50%;left:50%;width:26px;height:26px;transform:translate(-50%,-50%);
   pointer-events:none;border:1.4px solid rgba(255,213,74,.75);border-radius:50%;
   box-shadow:0 0 0 1px rgba(0,0,0,.4)}

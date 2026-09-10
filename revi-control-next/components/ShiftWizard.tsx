@@ -44,6 +44,7 @@ function avail(n: number) {
   return { n, ok: !isMaint && !isCharge, status: isMaint ? "maint" : isCharge ? "charge" : "avail" };
 }
 const FLEET = Array.from({ length: 50 }, (_, i) => avail(i + 1));
+const AVAIL_NUMS = FLEET.filter(d => d.ok).map(d => d.n); // all launch-ready drones
 
 const STEPS = ["תרחיש", "מזג אוויר", "רחפנים", "משקל ואיזון", "מפה + שיגור", "אישור", "אלגוריתם", "סיכום", "שיגור"];
 
@@ -62,6 +63,9 @@ export default function ShiftWizard() {
   const [algo, setAlgo] = useState<Algo>("boustro");
   const [eye, setEye] = useState<number | null>(null);
   const [geo, setGeo] = useState<Geo | null>(null);
+  const [altM, setAltM] = useState<number | null>(null); // null = follow AI recommendation
+  const [recAlt, setRecAlt] = useState(6);               // AI/weather recommended altitude
+  const flyAlt = altM ?? recAlt;
   const [weatherOk, setWeatherOk] = useState(false);
   const [weightOk, setWeightOk] = useState(true);
   const [permit, setPermit] = useState({ airspace: false, tank: false });
@@ -119,6 +123,8 @@ export default function ShiftWizard() {
       return next;
     });
   };
+  const selectAll = () => { setDrones([...AVAIL_NUMS]); if (!eye) setEye(AVAIL_NUMS[0]); }; // all + first as Eye
+  const clearAll = () => { setDrones([]); setEye(null); };
 
   // Per-step gate for the Next button (indexed by step).
   const canNext = [
@@ -139,6 +145,7 @@ export default function ShiftWizard() {
     if (isOcean) params.set("scenario", "ocean");
     if (operator.trim()) params.set("op", operator.trim());
     if (supervisor.trim()) params.set("sup", supervisor.trim());
+    params.set("alt", String(flyAlt));
     if (eye && drones.includes(eye)) params.set("eye", String(eye));
     if (geo) {
       const b = geo.base, z = geo.zone;
@@ -188,13 +195,18 @@ export default function ShiftWizard() {
 
         {/* 1 — Weather + AI flight advisor */}
         {step === 1 && (
-          <WeatherStep scenario={scenario} confirmed={weatherOk} onConfirm={setWeatherOk} />
+          <WeatherStep scenario={scenario} confirmed={weatherOk} onConfirm={setWeatherOk} onRecAlt={setRecAlt} />
         )}
 
         {/* 2 — Drones */}
         {step === 2 && (
           <div className="wz-pane">
             <h2>בחר רחפנים <span className="wz-badge">{drones.length} נבחרו</span></h2>
+            <div className="wz-pick">
+              <button className="wz-pick-b" onClick={selectAll}>בחר את כל הזמינים ({AVAIL_NUMS.length})</button>
+              <button className="wz-pick-b ghost" onClick={clearAll} disabled={drones.length === 0}>נקה</button>
+              <span className="wz-pick-hint">💡 בחר רחפן אחד או את כולם בלחיצה — ומומלץ לייעד רחפן צילום (עין) שישוגר ראשון.</span>
+            </div>
             <div className="wz-fleet">
               {FLEET.map(d => (
                 <button
@@ -259,13 +271,26 @@ export default function ShiftWizard() {
         {/* 6 — Algorithm */}
         {step === 6 && (
           <div className="wz-pane">
-            <h2>אלגוריתם כיסוי</h2>
+            <h2>אלגוריתם כיסוי וגובה טיסה</h2>
             <div className="wz-algos">
               {ALGOS.map(a => (
                 <button key={a.id} className={`wz-algo ${algo === a.id ? "on" : ""}`} onClick={() => setAlgo(a.id)}>
                   <b>{a.he}</b><p>{a.desc}</p>
                 </button>
               ))}
+            </div>
+            <div className="wz-alt">
+              <div className="wz-alt-top">
+                <span>🛩 גובה ריסוס</span>
+                <b>{flyAlt} מ׳</b>
+              </div>
+              <input type="range" min={DRONE_SPEC.minAltM} max={DRONE_SPEC.maxAltM} value={flyAlt}
+                onChange={e => setAltM(+e.target.value)} />
+              <div className="wz-alt-scale"><span>{DRONE_SPEC.minAltM} מ׳ (מינ׳ יצרן)</span><span>{DRONE_SPEC.maxAltM} מ׳ (מקס׳ יצרן)</span></div>
+              <div className="wz-note">
+                🤖 מומלץ ע״י יועץ מזג האוויר: <b style={{ color: "var(--accent)" }}>{recAlt} מ׳</b> (לפי הרוח ומגבלות היצרן).
+                {altM !== null && altM !== recAlt && <button className="wz-alt-reset" onClick={() => setAltM(null)}>אפס להמלצה</button>}
+              </div>
             </div>
           </div>
         )}
@@ -283,6 +308,7 @@ export default function ShiftWizard() {
               <div><span>רחפנים</span><b>{drones.length} · {[...drones].sort((a, b) => a - b).map(n => "D" + n).join(", ") || "—"}</b></div>
               <div><span>רחפן צילום</span><b>{eye ? `📹 D${eye}` : "ללא"}</b></div>
               <div><span>אלגוריתם</span><b>{ALGOS.find(a => a.id === algo)?.he}</b></div>
+              <div><span>גובה טיסה</span><b>{flyAlt} מ׳{altM === null ? " (מומלץ)" : ""}</b></div>
               <div><span>אזור ריסוס</span><b>{geo ? `${dunam(geo.zone).toLocaleString("he-IL")} דונם` : "ברירת מחדל"}</b></div>
               <div><span>אישורים</span><b style={{ color: "var(--good)" }}>✓ הושלמו</b></div>
             </div>

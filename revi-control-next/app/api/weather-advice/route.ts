@@ -64,6 +64,7 @@ export async function POST(req: Request) {
       temp: base.temp,
       humidity: base.humidity,
       crabDeg: base.crabDeg,
+      recAltM: base.recAltM,
       upwindOffsetM: base.upwindOffsetM,
       laneAdjPct: base.laneAdjPct,
       passAxisHe: base.passAxisHe,

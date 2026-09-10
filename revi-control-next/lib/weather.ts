@@ -21,6 +21,7 @@ export interface Advice {
   temp: number;
   humidity: number;
   crabDeg: number;        // heading offset into wind to hold ground track
+  recAltM: number;        // recommended spray altitude given wind + manufacturer range
   passAxisHe: string;     // recommended spray-pass orientation
   laneAdjPct: number;     // tighten lane spacing by this % to counter drift
   upwindOffsetM: number;  // shift release line upwind by this many metres
@@ -31,6 +32,8 @@ export interface Advice {
 }
 
 const AIRSPEED = 10; // typical spray-drone airspeed, m/s
+const ALT_MIN = 2, ALT_MAX = 12; // manufacturer spray-altitude window (m)
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 export function windDirHe(deg: number): string {
   const dirs = ["צפון", "צפון-מזרח", "מזרח", "דרום-מזרח", "דרום", "דרום-מערב", "מערב", "צפון-מערב"];
@@ -45,6 +48,8 @@ export function computeAdvice(inp: WxIn): Advice {
 
   const verdict: Verdict = w < caution ? "GO" : w < nogo ? "CAUTION" : "NO_GO";
   const crabDeg = Math.round((Math.asin(Math.min(1, w / AIRSPEED)) * 180) / Math.PI);
+  // Higher altitude = wider coverage but more drift. Calm → fly high; windy → fly low.
+  const recAltM = Math.round(ALT_MAX - (ALT_MAX - ALT_MIN) * clamp(w / nogo, 0, 1));
   const driftM = Math.round(w * 2); // ~2 m drift per m/s at ~30 m spray height
   const upwindOffsetM = driftM;
   const laneAdjPct = verdict === "GO" ? 0 : Math.min(30, Math.round(w * 4));
@@ -64,6 +69,7 @@ export function computeAdvice(inp: WxIn): Advice {
   if (ocean) reasons.push("משימת ים: מצב הים משני למהירות הרוח — הרוח היא הגורם המכריע לסחף");
 
   const operatorTips: string[] = [];
+  operatorTips.push(`גובה ריסוס מומלץ: ${recAltM} מ׳ (טווח יצרן ${ALT_MIN}–${ALT_MAX} מ׳) — ${w >= caution ? "נמוך יותר להפחתת סחף" : "גבוה יותר לכיסוי רחב"}`);
   if (verdict !== "GO") {
     operatorTips.push(`טוס בזווית סחיפה (crab) של כ-${crabDeg}° אל תוך הרוח כדי לשמור על מסלול הקרקע`);
     operatorTips.push(`הזז את קו השחרור ${upwindOffsetM} מ׳ נגד כיוון הרוח — הטיפות יסחפו בחזרה אל היעד`);
@@ -77,7 +83,7 @@ export function computeAdvice(inp: WxIn): Advice {
   return {
     verdict, windSpeed: w, windDir: inp.windDir, windDirHe: dHe,
     temp: inp.temp, humidity: inp.humidity,
-    crabDeg, passAxisHe, laneAdjPct, upwindOffsetM, driftM,
+    crabDeg, recAltM, passAxisHe, laneAdjPct, upwindOffsetM, driftM,
     reasons, operatorTips, source: "fallback",
   };
 }

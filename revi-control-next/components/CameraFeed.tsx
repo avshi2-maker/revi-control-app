@@ -7,10 +7,11 @@ import "leaflet/dist/leaflet.css";
 // a REAL close-up satellite view of the mission area with the spray drones
 // animated flying above it. Works over land and sea (same Esri imagery).
 export default function CameraFeed({
-  center, zoom, sprayCount, label,
-}: { center: [number, number]; zoom: number; sprayCount: number; label: string }) {
+  center, zoom, sprayCount, label, ocean = false,
+}: { center: [number, number]; zoom: number; sprayCount: number; label: string; ocean?: boolean }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const altRef = useRef<HTMLSpanElement>(null);
+  const waveRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const N = Math.max(1, sprayCount);
@@ -38,8 +39,35 @@ export default function CameraFeed({
     const markers = Array.from({ length: N }, (_, i) =>
       L.marker(center, { icon: droneIcon(cols[i % 4]), interactive: false, zIndexOffset: 500 }).addTo(map));
 
+    // Ocean wave overlay — open sea shows as a flat blue block on any satellite,
+    // so we paint a moving water surface to convey a real low-altitude sea view.
+    const wc = waveRef.current;
+    const wctx = ocean && wc ? wc.getContext("2d") : null;
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    const fitWave = () => { if (wc) { wc.width = wc.clientWidth * DPR; wc.height = wc.clientHeight * DPR; } };
+    if (wctx) fitWave();
+
     let raf = 0;
     function frame(now: number) {
+      if (wctx && wc) {
+        const W = wc.width, H = wc.height;
+        wctx.clearRect(0, 0, W, H);
+        const scroll = (now / 40) % (26 * DPR);
+        wctx.strokeStyle = "rgba(180,225,255,.18)"; wctx.lineWidth = 1.4 * DPR;
+        for (let y = -26 * DPR; y < H + 26; y += 13 * DPR) {
+          wctx.beginPath();
+          for (let x = -10; x < W + 10; x += 7 * DPR)
+            wctx.lineTo(x, y + scroll + Math.sin(x / (22 * DPR) + now / 650 + y) * 4 * DPR);
+          wctx.stroke();
+        }
+        // sun-glint speckle
+        wctx.fillStyle = "rgba(220,240,255,.12)";
+        for (let i = 0; i < 26; i++) {
+          const gx = (Math.sin(i * 12.9 + now / 1400) * 0.5 + 0.5) * W;
+          const gy = (Math.cos(i * 7.7 + now / 1700) * 0.5 + 0.5) * H;
+          wctx.beginPath(); wctx.arc(gx, gy, 1.5 * DPR, 0, 7); wctx.fill();
+        }
+      }
       const b = map.getBounds();
       const w = b.getEast() - b.getWest(), h = b.getNorth() - b.getSouth();
       const cLat = (b.getNorth() + b.getSouth()) / 2, cLng = (b.getEast() + b.getWest()) / 2;
@@ -53,16 +81,17 @@ export default function CameraFeed({
       raf = requestAnimationFrame(frame);
     }
     raf = requestAnimationFrame(frame);
-    const onResize = () => setTimeout(() => map.invalidateSize(), 80);
+    const onResize = () => setTimeout(() => { map.invalidateSize(); fitWave(); }, 80);
     window.addEventListener("resize", onResize);
     setTimeout(() => map.invalidateSize(), 100);
 
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); map.remove(); };
-  }, [center, zoom, sprayCount]);
+  }, [center, zoom, sprayCount, ocean]);
 
   return (
     <div className="cf-inner">
       <div ref={mapRef} className="cf-map" />
+      {ocean && <canvas ref={waveRef} className="cf-waves" />}
       <div className="cf-scan" />
       <div className="cf-cross" />
       <div className="cf-hud">

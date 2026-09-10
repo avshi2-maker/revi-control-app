@@ -668,7 +668,7 @@ export default function LiveMap() {
               <span>📹 שידור עין · D{eyeNum} <span className="cf-live">● LIVE</span></span>
               <button onClick={() => setShowFeed(v => !v)} title={showFeed ? "מזער" : "הצג"}>{showFeed ? "—" : "▢"}</button>
             </div>
-            {showFeed && <CameraFeed center={feedGeo.c} zoom={feedGeo.z} sprayCount={Math.max(1, droneCount - 1)} label={`עין D${eyeNum}`} />}
+            {showFeed && <CameraFeed center={feedGeo.c} zoom={feedGeo.z} ocean={isOcean} sprayCount={Math.max(1, droneCount - 1)} label={`עין D${eyeNum}`} />}
           </div>
         )}
 
