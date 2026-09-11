@@ -37,6 +37,7 @@ export default function LiveMap() {
   const [windSpeed, setWindSpeed] = useState(0);         // live wind for time estimate
   const [transitKm, setTransitKm] = useState(0);         // base→zone transit
   const [algo, setAlgo] = useState("boustro");           // coverage pattern from URL
+  const [flyAltM, setFlyAltM] = useState(6);             // spray altitude from URL
 
   // Computed mission-time estimate (physics: area, fleet, wind, pattern, transit, refills).
   const nSprayCalc = Math.max(1, droneCount - (hasEye ? 1 : 0));
@@ -56,6 +57,7 @@ export default function LiveMap() {
     const ocean = new URLSearchParams(location.search).get("scenario") === "ocean";
     setIsOcean(ocean);
     setAlgo(new URLSearchParams(location.search).get("algo") || "boustro");
+    setFlyAltM(Number(new URLSearchParams(location.search).get("alt")) || 6);
     const activeGEO = ocean ? GEO_OCEAN : GEO;
 
     // Which drones fly — from ?drones=1,2,3 ; default D1–D4.
@@ -785,7 +787,7 @@ export default function LiveMap() {
         </div>
         <div id="crabbox" className="crabbox" />
         <div id="ndvibox" className="ndvibox" />
-        <div className="terrain-badge" title="מעקב תבליט קרקע פעיל (ראדאר מערך מדורג)">🛰 מעקב תבליט LiDAR · פעיל</div>
+        <div className="terrain-badge" title="גובה ריסוס + מעקב תבליט קרקע (ראדאר מערך מדורג)">🛰 גובה <b>{flyAltM}</b> מ׳ · מעקב תבליט <b>פעיל</b></div>
         <div id="weather" />
         <div id="coordbox" style={{ position: "absolute", left: 12, bottom: 74, zIndex: 700, background: "rgba(8,20,32,.85)", color: "#d6ecff", font: "12px/1.6 'Segoe UI', sans-serif", padding: "8px 11px", borderRadius: 10, border: "1px solid rgba(120,190,220,.28)", direction: "ltr", pointerEvents: "none", minWidth: 200, boxShadow: "0 6px 20px rgba(0,0,0,.35)" }} />
         <div id="hint">רווח <b>=</b> השהה · <b>← →</b> דילוג · <b>R</b> מהתחלה · גרור את <b>{isOcean ? "הספינה" : "הבסיס"}</b> ואת <b>פינות האזור</b></div>
