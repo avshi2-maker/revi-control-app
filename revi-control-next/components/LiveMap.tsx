@@ -282,7 +282,26 @@ export default function LiveMap() {
       zoneRect.setBounds([[Z.s, Z.w], [Z.n, Z.e]]);
       buildLanes();
     }
-    baseMarker.on("drag", (e: any) => { base = [e.latlng.lng, e.latlng.lat]; updateCoordBox(); setTransitKm(transitKmNow()); });
+    baseMarker.on("drag", (e: any) => {
+      let lng = e.latlng.lng, lat = e.latlng.lat;
+      // Safety: operator/base MUST be outside the spray zone (chemical exposure + RTB path).
+      if (lng > Z.w && lng < Z.e && lat > Z.s && lat < Z.n) {
+        const dW = lng - Z.w, dE = Z.e - lng, dS = lat - Z.s, dN = Z.n - lat;
+        const m = Math.min(dW, dE, dS, dN);
+        if (m === dW) lng = Z.w - 0.0008;
+        else if (m === dE) lng = Z.e + 0.0008;
+        else if (m === dS) lat = Z.s - 0.0005;
+        else lat = Z.n + 0.0005;
+        baseMarker.setLatLng([lat, lng]);
+        const bw = document.getElementById("baseinsidewarn");
+        if (bw) {
+          bw.style.display = "flex";
+          clearTimeout((bw as any)._t);
+          (bw as any)._t = setTimeout(() => { bw.style.display = "none"; }, 3500);
+        }
+      }
+      base = [lng, lat]; updateCoordBox(); setTransitKm(transitKmNow());
+    });
     const cornerIcon = (lbl: string) => L.divIcon({ className: "zh", html: `<div class="zh-corner">${lbl}</div>`, iconSize: [28, 28], iconAnchor: [14, 14] });
     const moveIcon = L.divIcon({ className: "zh", html: `<div class="zh-move">✥</div>`, iconSize: [30, 30], iconAnchor: [15, 15] });
     const swH = L.marker([Z.s, Z.w], { icon: cornerIcon("SW"), draggable: true, zIndexOffset: 600 }).addTo(map);
@@ -721,6 +740,9 @@ export default function LiveMap() {
         <div id="phase"><span id="phaseTxt" /><span className="dotp" /></div>
         <div id="pausebadge">⏸ מושהה — מצב הדגמה</div>
         <div id="rtbwarn" className="rtbwarn" />
+        <div id="baseinsidewarn" style={{ display:"none", position:"absolute", top:68, left:"50%", transform:"translateX(-50%)", zIndex:920, background:"rgba(239,68,68,.93)", color:"#fff", padding:"9px 18px", borderRadius:10, fontWeight:700, fontSize:13, alignItems:"center", gap:8, boxShadow:"0 4px 18px rgba(0,0,0,.45)", whiteSpace:"nowrap" }}>
+          ⚠ מיקום המפעיל חייב להיות מחוץ לאזור הריסוס — הועבר אוטומטית לגבול
+        </div>
         {hasEye && (
           <div className={`camfeed ${showFeed ? "" : "min"}`}>
             <div className="cf-bar">

@@ -110,6 +110,12 @@ export default function ShiftWizard() {
   const reachOk = sprayKm > 0; // enough battery to reach (and, on land, return)
   const rangeOk = sprayDrones.length > 0 && reachOk && perDroneDunam <= capMinDunam;
 
+  // Operator safety: base (H / boat) must be OUTSIDE the spray zone.
+  // Spray chemicals drift up to several meters; drones RTB through the active zone.
+  const baseInZone =
+    baseForCalc.lng > zoneForCalc.w && baseForCalc.lng < zoneForCalc.e &&
+    baseForCalc.lat > zoneForCalc.s && baseForCalc.lat < zoneForCalc.n;
+
   const pickScenario = (s: Scenario) => {
     setScenario(s);
     setPad(s === "ocean" ? "boat" : "ground");
@@ -133,7 +139,7 @@ export default function ShiftWizard() {
     weatherOk,          // 1 weather — must confirm/abort
     drones.length > 0,  // 2 drones
     weightOk,           // 3 weight & balance — overweight blocks
-    true,               // 4 map + pad
+    !baseInZone,        // 4 map + pad — operator must be outside spray zone
     permitOk,           // 5 clearances
     true,               // 6 algorithm
     rangeOk,            // 7 summary — battery/range must cover the zone
@@ -257,6 +263,13 @@ export default function ShiftWizard() {
                 גרור את <b>{pad === "boat" ? "⛵ הספינה" : "H הבסיס"}</b>, את פינות <b>SW / NE</b> לשינוי גודל, או את <b>מרכז המלבן</b> להזזת האזור
                 {geo && <span className="wz-area"> · שטח נבחר: <b>{dunam(geo.zone).toLocaleString("he-IL")} דונם</b></span>}
               </div>
+              {baseInZone && (
+                <div className="wz-warn" style={{ marginTop: 8 }}>
+                  🚫 מיקום {pad === "boat" ? "הספינה" : "הבסיס (H)"} בתוך אזור הריסוס!<br />
+                  <b>על המפעיל לעמוד מחוץ לאזור.</b> חשיפה לחומר הדברה פעיל וסכנת התנגשות עם רחפנים החוזרים לבסיס.<br />
+                  גרור את {pad === "boat" ? "הספינה" : "H"} החוצה מהאזור המסומן כדי להמשיך.
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -314,6 +327,7 @@ export default function ShiftWizard() {
               <div><span>אלגוריתם</span><b>{ALGOS.find(a => a.id === algo)?.he}</b></div>
               <div><span>גובה טיסה</span><b>{flyAlt} מ׳{altM === null ? " (מומלץ)" : ""}</b></div>
               <div><span>אזור ריסוס</span><b>{geo ? `${dunam(geo.zone).toLocaleString("he-IL")} דונם` : "ברירת מחדל"}</b></div>
+              <div><span>מיקום מפעיל</span><b style={{ color: baseInZone ? "var(--bad)" : "var(--good)" }}>{baseInZone ? "⚠ בתוך אזור הריסוס!" : "✓ מחוץ לאזור — בטוח"}</b></div>
               <div><span>אישורים</span><b style={{ color: "var(--good)" }}>✓ הושלמו</b></div>
             </div>
 
