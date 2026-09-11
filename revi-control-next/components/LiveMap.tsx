@@ -203,6 +203,37 @@ export default function LiveMap() {
       const w = (Z.e - Z.w) * 111320 * Math.cos(midLat);
       return Math.max(0, Math.round((h * w) / 1000));
     }
+    // ── #1 Variable-rate prescription (NDVI) overlay ──
+    // Crop-health grid over the zone: green = healthy (thin/skip), yellow = moderate,
+    // red = stressed (boost). Drives an estimated chemical-saving figure.
+    const ndviLayer = L.layerGroup();
+    let ndviOn = false;
+    function buildNDVI() {
+      ndviLayer.clearLayers();
+      const G = 6, latS = (Z.n - Z.s) / G, lngS = (Z.e - Z.w) / G;
+      let healthy = 0, moderate = 0;
+      for (let i = 0; i < G; i++) for (let j = 0; j < G; j++) {
+        const v = 0.35 + 0.6 * Math.abs(Math.sin(i * 12.9 + j * 7.7 + 1)); // deterministic pseudo-NDVI
+        const col = v > 0.72 ? "#22c55e" : v > 0.55 ? "#eab308" : "#ef4444";
+        if (v > 0.72) healthy++; else if (v > 0.55) moderate++;
+        const s = Z.s + i * latS, w = Z.w + j * lngS;
+        L.rectangle([[s, w], [s + latS, w + lngS]], { color: "#0a0f16", weight: 0.5, fillColor: col, fillOpacity: 0.4 }).addTo(ndviLayer);
+      }
+      const total = G * G;
+      const savings = Math.round((healthy / total) * 45 + (moderate / total) * 12);
+      const lg = document.getElementById("ndvibox");
+      if (lg) lg.innerHTML =
+        `<div class="ndvi-title">🌱 מפת בריאות (NDVI) · ריסוס מדויק</div>` +
+        `<div class="ndvi-legend"><span style="color:#22c55e">■ בריא — דילול</span> <span style="color:#eab308">■ בינוני</span> <span style="color:#ef4444">■ מוצק — הגבר</span></div>` +
+        `<div class="ndvi-save">חיסכון תרסיס משוער: <b>${savings}%</b></div>`;
+    }
+    function toggleNDVI() {
+      ndviOn = !ndviOn;
+      if (ndviOn) { buildNDVI(); ndviLayer.addTo(map); } else { map.removeLayer(ndviLayer); }
+      document.getElementById("ndvitoggle")?.classList.toggle("on", ndviOn);
+      const b = document.getElementById("ndvibox"); if (b) b.style.display = ndviOn ? "block" : "none";
+    }
+
     // Transit distance (km) base→nearest zone edge, doubled on land (out+back).
     function transitKmNow() {
       const nLng = Math.min(Math.max(base[0], Z.w), Z.e);
@@ -210,7 +241,7 @@ export default function LiveMap() {
       return kmBetween(base, [nLng, nLat]) * (ocean ? 1 : 2);
     }
     // Push the mission-time inputs into React state (called on discrete changes).
-    function syncMissionInputs() { setMissionArea(zoneAreaDunam()); setTransitKm(transitKmNow()); }
+    function syncMissionInputs() { setMissionArea(zoneAreaDunam()); setTransitKm(transitKmNow()); if (ndviOn) buildNDVI(); }
     syncMissionInputs();
     // Anti-drift crab overlay: wind arrow on the map + a live crab-triangle HUD
     // showing how the drone aims into the wind so spray lands on target.
@@ -588,6 +619,7 @@ export default function LiveMap() {
     g("endReplay").addEventListener("click", onReplay);
     const onCrab = () => { showCrab = !showCrab; drawCrab(); };
     g("crabtoggle")?.addEventListener("click", onCrab);
+    g("ndvitoggle")?.addEventListener("click", toggleNDVI);
     let dragging = false;
     const scrubTo = (ev: any) => { const el = g("scrub"); const r = el.getBoundingClientRect(); const x = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left; seek((x / r.width) * DUR); };
     const onDown = (e: any) => { dragging = true; setPlaying(false); scrubTo(e); e.stopPropagation(); };
@@ -744,11 +776,16 @@ export default function LiveMap() {
           <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z" /></svg>
           הפעל שוב
         </button>
-        {hasEye && (
-          <a className="navlink station-link" href={`/station${query}`} target="_blank" rel="noopener noreferrer">📹 תחנת פיקוד</a>
-        )}
-        <button id="crabtoggle" className="navlink crab-toggle on">🌬 דפוס נגד סחף</button>
+        <div className="map-ctrls">
+          <button id="crabtoggle" className="mapctl on">🌬 דפוס נגד סחף</button>
+          <button id="ndvitoggle" className="mapctl">🌱 מפת בריאות (NDVI)</button>
+          {hasEye && (
+            <a className="mapctl station-link" href={`/station${query}`} target="_blank" rel="noopener noreferrer">📹 תחנת פיקוד</a>
+          )}
+        </div>
         <div id="crabbox" className="crabbox" />
+        <div id="ndvibox" className="ndvibox" />
+        <div className="terrain-badge" title="מעקב תבליט קרקע פעיל (ראדאר מערך מדורג)">🛰 מעקב תבליט LiDAR · פעיל</div>
         <div id="weather" />
         <div id="coordbox" style={{ position: "absolute", left: 12, bottom: 74, zIndex: 700, background: "rgba(8,20,32,.85)", color: "#d6ecff", font: "12px/1.6 'Segoe UI', sans-serif", padding: "8px 11px", borderRadius: 10, border: "1px solid rgba(120,190,220,.28)", direction: "ltr", pointerEvents: "none", minWidth: 200, boxShadow: "0 6px 20px rgba(0,0,0,.35)" }} />
         <div id="hint">רווח <b>=</b> השהה · <b>← →</b> דילוג · <b>R</b> מהתחלה · גרור את <b>{isOcean ? "הספינה" : "הבסיס"}</b> ואת <b>פינות האזור</b></div>

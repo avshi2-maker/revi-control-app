@@ -145,13 +145,27 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
   background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.5);color:var(--warn);
   font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;opacity:0;transition:opacity .25s}
 #pausebadge.show{opacity:1}
-/* Cockpit controls — stacked cleanly below the topbar on the right, out of the KPIs. */
-.navlink{position:absolute;top:64px;right:12px;left:auto;z-index:700;background:rgba(13,22,34,.9);
-  border:1px solid var(--line);color:var(--accent);font-size:12.5px;font-weight:700;
-  padding:7px 13px;border-radius:20px;text-decoration:none;opacity:.9;transition:opacity .2s}
-.navlink:hover{opacity:1}
-.crab-toggle{top:64px;right:12px;left:auto}
-.station-link{top:102px;right:12px;left:auto}
+/* Cockpit map controls — one clean stacked column, top-right, below the topbar. */
+.map-ctrls{position:absolute;top:60px;right:12px;z-index:700;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.mapctl{background:rgba(9,16,26,.94);border:1px solid var(--line);color:var(--ink);font-family:inherit;
+  font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:20px;text-decoration:none;cursor:pointer;
+  white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.45);transition:all .2s}
+.mapctl:hover{border-color:var(--accent)}
+.mapctl.on{background:rgba(34,211,238,.16);border-color:rgba(34,211,238,.5);color:#7dd3fc}
+#ndvitoggle.on{background:rgba(34,197,94,.16);border-color:rgba(34,197,94,.55);color:#86efac}
+.mapctl.station-link{background:rgba(255,213,74,.16);border-color:rgba(255,213,74,.5);color:#ffd54a}
+/* NDVI prescription legend */
+.ndvibox{position:absolute;right:12px;top:150px;z-index:700;display:none;width:210px;direction:rtl;
+  background:rgba(8,20,32,.92);border:1px solid rgba(34,197,94,.4);border-radius:10px;padding:10px 12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.45)}
+.ndvi-title{font-size:12px;font-weight:800;color:#86efac;margin-bottom:6px}
+.ndvi-legend{display:flex;flex-wrap:wrap;gap:8px;font-size:10.5px;font-weight:700;margin-bottom:6px}
+.ndvi-save{font-size:12px;color:var(--ink)}.ndvi-save b{color:#86efac}
+/* Terrain-follow / LiDAR status badge */
+.terrain-badge{position:absolute;right:12px;bottom:34px;z-index:700;
+  background:rgba(8,20,32,.9);border:1px solid rgba(120,190,220,.3);color:#9fe6c0;
+  font-size:11px;font-weight:700;padding:6px 11px;border-radius:16px;pointer-events:none;
+  box-shadow:0 3px 12px rgba(0,0,0,.4)}
 /* leaflet drone/base markers */
 .drone-ic{position:relative}
 .drone-ic .body{width:22px;height:22px;transform-origin:center;transition:transform .1s linear}
@@ -437,6 +451,39 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
   box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:grab}
 .zp-handle:active{cursor:grabbing}
 @media(max-width:640px){.wz-cards{grid-template-columns:1fr}.zp-map{height:280px}}
+
+/* ══ Pitch / promotion page ══ */
+.pitch{min-height:100vh;background:var(--bg);color:var(--ink);overflow:auto}
+.pt-hero{text-align:center;padding:56px 24px 40px;background:radial-gradient(ellipse at top,rgba(34,211,238,.12),transparent 60%);border-bottom:1px solid var(--line)}
+.pt-logo{width:60px;height:60px;border-radius:16px;margin:0 auto 14px;background:linear-gradient(135deg,var(--accent),#0891b2);position:relative}
+.pt-logo:after{content:"";position:absolute;inset:15px;border-radius:50%;border:3px solid rgba(4,19,31,.6)}
+.pt-hero h1{font-size:44px;font-weight:900;letter-spacing:.5px}
+.pt-tag{font-size:18px;font-weight:700;color:var(--accent);margin-top:6px}
+.pt-lede{max-width:640px;margin:16px auto 0;font-size:15px;line-height:1.85;color:var(--muted)}
+.pt-cta-top{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+.pt-btn{background:var(--accent);color:#03111e;font-size:15px;font-weight:800;padding:13px 28px;border-radius:28px;
+  text-decoration:none;transition:transform .2s,box-shadow .2s}
+.pt-btn:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(34,211,238,.35)}
+.pt-btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.pt-sec{max-width:960px;margin:0 auto;padding:34px 24px}
+.pt-sec h2{font-size:22px;font-weight:800;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--accent);display:inline-block}
+.pt-p{font-size:15px;line-height:1.85;color:var(--ink);max-width:720px}
+.pt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.pt-card{background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:18px;transition:border-color .2s,transform .2s}
+.pt-card:hover{border-color:rgba(34,211,238,.4);transform:translateY(-3px)}
+.pt-ico{font-size:30px;margin-bottom:8px}
+.pt-card b{font-size:15px;display:block;margin-bottom:7px;color:var(--ink)}
+.pt-card p{font-size:13px;line-height:1.7;color:var(--muted)}
+.pt-adv{display:flex;flex-direction:column;gap:10px}
+.pt-advrow{display:flex;gap:14px;align-items:baseline;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+.pt-advrow span{font-size:15px;font-weight:800;color:var(--accent);min-width:110px}
+.pt-advrow b{font-size:14px;font-weight:500;color:var(--ink);line-height:1.6}
+.pt-final{text-align:center}
+.pt-final h2{display:inline-block}
+.pt-final .pt-p{margin:0 auto}
+.pt-contact{margin-top:22px;font-size:14px;color:var(--muted)}
+.pt-contact b{color:var(--accent)}
+@media(max-width:600px){.pt-hero h1{font-size:34px}}
 
 /* ══ Data verification / transparency page ══ */
 .dv{min-height:100vh;background:var(--bg);color:var(--ink);overflow:auto}
