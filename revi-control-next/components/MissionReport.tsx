@@ -1,8 +1,8 @@
 "use client";
-import { OCEAN_UNIT_COST, REPORT } from "@/lib/config";
+import { OCEAN_UNIT_COST } from "@/lib/config";
 
 // End-of-mission report modal. Rendered by LiveMap; opened from the endcard.
-// Deterministic figures (mission always ends 100% covered) + live drone count.
+// Uses the live computed duration + real area.
 export type MissionReportProps = {
   open: boolean;
   onClose: () => void;
@@ -11,19 +11,22 @@ export type MissionReportProps = {
   pad: "ground" | "boat";
   operator?: string;
   supervisor?: string;
+  durationHM?: string;
+  areaDunam?: number;
 };
 
-export default function MissionReport({ open, onClose, scenario, droneCount, pad, operator, supervisor }: MissionReportProps) {
+export default function MissionReport({ open, onClose, scenario, droneCount, pad, operator, supervisor, durationHM = "1:48", areaDunam = 420 }: MissionReportProps) {
   if (!open) return null;
   const ocean = scenario === "ocean";
-  const ref = ocean ? REPORT.ocean : REPORT.land;
+  const areaStr = `${areaDunam.toLocaleString("he-IL")} דונם${ocean ? " ימי" : ""}`;
+  const [dh, dm] = durationHM.split(":").map(Number);
+  const durMin = (dh || 0) * 60 + (dm || 0);
 
   const now = new Date();
   const p2 = (x: number) => String(x).padStart(2, "0");
   const dateStr = `${p2(now.getDate())}/${p2(now.getMonth() + 1)}/${now.getFullYear()}`;
   const endStr = now.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
-  // Start = end minus 1:48 (matches durationHM).
-  const start = new Date(now.getTime() - (108 * 60 * 1000));
+  const start = new Date(now.getTime() - durMin * 60 * 1000);
   const startStr = start.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
 
   const cost = ocean ? droneCount * OCEAN_UNIT_COST : 0;
@@ -36,10 +39,10 @@ export default function MissionReport({ open, onClose, scenario, droneCount, pad
     ["תאריך", dateStr],
     ["שעת התחלה", startStr],
     ["שעת סיום", endStr],
-    ["משך בפועל", `${ref.durationHM} שעות`],
+    ["משך משוער (מחושב)", `${durationHM} שעות`],
     ["נקודת שיגור", pad === "boat" ? "⛵ ספינה" : "🏟 קרקע"],
-    ["שטח יעד", ref.areaLabel],
-    ["שטח שטופל", ref.areaTreated],
+    ["שטח יעד", areaStr],
+    ["שטח שטופל", areaStr],
     ["כיסוי", "100%"],
     ["מספר רחפנים", String(droneCount)],
     ["סטטוס רחפנים", ocean ? `${droneCount} נספו בים 💦` : `${droneCount} חזרו לבסיס ✓`],

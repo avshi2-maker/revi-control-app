@@ -9,6 +9,7 @@ import {
 } from "@/lib/simulation";
 import MissionReport from "@/components/MissionReport";
 import CameraFeed from "@/components/CameraFeed";
+import { estimateMissionMin, fmtHM as fmtDurHM } from "@/lib/estimate";
 
 // Great-circle distance (km) between two [lng,lat] points.
 function kmBetween(a: Pt, b: Pt) {
@@ -32,6 +33,17 @@ export default function LiveMap() {
   const [eyeNum, setEyeNum] = useState(0);
   const [showFeed, setShowFeed] = useState(true);
   const [feedGeo, setFeedGeo] = useState<{ c: [number, number]; z: number }>({ c: [32.353, 34.898], z: 15 });
+  const [missionArea, setMissionArea] = useState(420);   // live zone area (dunam)
+  const [windSpeed, setWindSpeed] = useState(0);         // live wind for time estimate
+  const [transitKm, setTransitKm] = useState(0);         // base→zone transit
+  const [algo, setAlgo] = useState("boustro");           // coverage pattern from URL
+
+  // Computed mission-time estimate (physics: area, fleet, wind, pattern, transit, refills).
+  const nSprayCalc = Math.max(1, droneCount - (hasEye ? 1 : 0));
+  const durationHM = fmtDurHM(estimateMissionMin({
+    areaDunam: missionArea, nSpray: nSprayCalc, windMps: windSpeed,
+    pattern: algo, transitKm, ocean: isOcean,
+  }));
   const [query, setQuery] = useState("");
   const [crew, setCrew] = useState<{ op: string; sup: string }>({ op: "", sup: "" });
 
@@ -43,6 +55,7 @@ export default function LiveMap() {
     // Scenario detection — ocean mode swaps GEO, boat marker, disables RTB
     const ocean = new URLSearchParams(location.search).get("scenario") === "ocean";
     setIsOcean(ocean);
+    setAlgo(new URLSearchParams(location.search).get("algo") || "boustro");
     const activeGEO = ocean ? GEO_OCEAN : GEO;
 
     // Which drones fly — from ?drones=1,2,3 ; default D1–D4.
@@ -190,6 +203,15 @@ export default function LiveMap() {
       const w = (Z.e - Z.w) * 111320 * Math.cos(midLat);
       return Math.max(0, Math.round((h * w) / 1000));
     }
+    // Transit distance (km) base→nearest zone edge, doubled on land (out+back).
+    function transitKmNow() {
+      const nLng = Math.min(Math.max(base[0], Z.w), Z.e);
+      const nLat = Math.min(Math.max(base[1], Z.s), Z.n);
+      return kmBetween(base, [nLng, nLat]) * (ocean ? 1 : 2);
+    }
+    // Push the mission-time inputs into React state (called on discrete changes).
+    function syncMissionInputs() { setMissionArea(zoneAreaDunam()); setTransitKm(transitKmNow()); }
+    syncMissionInputs();
     // Anti-drift crab overlay: wind arrow on the map + a live crab-triangle HUD
     // showing how the drone aims into the wind so spray lands on target.
     function crabSVG() {
@@ -227,7 +249,7 @@ export default function LiveMap() {
       zoneRect.setBounds([[Z.s, Z.w], [Z.n, Z.e]]);
       buildLanes();
     }
-    baseMarker.on("drag", (e: any) => { base = [e.latlng.lng, e.latlng.lat]; updateCoordBox(); });
+    baseMarker.on("drag", (e: any) => { base = [e.latlng.lng, e.latlng.lat]; updateCoordBox(); setTransitKm(transitKmNow()); });
     const cornerIcon = (lbl: string) => L.divIcon({ className: "zh", html: `<div class="zh-corner">${lbl}</div>`, iconSize: [28, 28], iconAnchor: [14, 14] });
     const moveIcon = L.divIcon({ className: "zh", html: `<div class="zh-move">✥</div>`, iconSize: [30, 30], iconAnchor: [15, 15] });
     const swH = L.marker([Z.s, Z.w], { icon: cornerIcon("SW"), draggable: true, zIndexOffset: 600 }).addTo(map);
@@ -250,7 +272,7 @@ export default function LiveMap() {
       relayout();
       // On cap, snap the corners back to the limit; otherwise leave them under the cursor.
       if (capped) { swH.setLatLng([Z.s, Z.w]); neH.setLatLng([Z.n, Z.e]); }
-      moveH.setLatLng([(Z.s + Z.n) / 2, (Z.w + Z.e) / 2]); updateCoordBox(); drawCrab();
+      moveH.setLatLng([(Z.s + Z.n) / 2, (Z.w + Z.e) / 2]); updateCoordBox(); drawCrab(); syncMissionInputs();
     };
     swH.on("drag", onHandle); neH.on("drag", onHandle);
     let zmc = { lat: (Z.s + Z.n) / 2, lng: (Z.w + Z.e) / 2 };
@@ -258,7 +280,7 @@ export default function LiveMap() {
     moveH.on("drag", (e: any) => {
       const p = e.latlng; const dLat = p.lat - zmc.lat, dLng = p.lng - zmc.lng; zmc = { lat: p.lat, lng: p.lng };
       Z = { w: Z.w + dLng, e: Z.e + dLng, s: Z.s + dLat, n: Z.n + dLat };
-      relayout(); swH.setLatLng([Z.s, Z.w]); neH.setLatLng([Z.n, Z.e]); updateCoordBox(); drawCrab();
+      relayout(); swH.setLatLng([Z.s, Z.w]); neH.setLatLng([Z.n, Z.e]); updateCoordBox(); drawCrab(); syncMissionInputs();
     });
     map.on("mousemove", (e: any) => { lastMouse = { lat: e.latlng.lat, lng: e.latlng.lng }; updateCoordBox(); });
     updateCoordBox();
@@ -551,7 +573,8 @@ export default function LiveMap() {
           wEl.innerHTML = `<div class="w-row"><span>🌡 ${temp}°C</span><span>💧 ${hum}%</span></div><div class="w-row"><span>🌬 ${ws.toFixed(1)} מ/ש ${wdir}</span></div><div class="w-proto" style="color:${col}">${ok}</div>`;
           wEl.classList.add("loaded");
         }
-        // Feed the anti-drift crab overlay
+        // Feed the anti-drift crab overlay + mission-time estimate
+        setWindSpeed(ws);
         windDeg = c.winddirection_10m; windMps = ws;
         crabDeg = Math.round((Math.asin(Math.min(1, ws / 10)) * 180) / Math.PI);
         // Screen-frame yaw: nose into the wind's E-W component while spraying (visual crab).
@@ -694,14 +717,14 @@ export default function LiveMap() {
           <div className="tag">100% כיסוי · אפס התערבות ידנית</div>
           {isOcean ? (
             <div className="endrow">
-              <div className="stat"><div className="n">~1,240</div><div className="c">דונם ימי</div></div>
-              <div className="stat"><div className="n">1:48</div><div className="c">שעות בפועל</div></div>
+              <div className="stat"><div className="n">{missionArea.toLocaleString("he-IL")}</div><div className="c">דונם ימי</div></div>
+              <div className="stat"><div className="n">{durationHM}</div><div className="c">שעות (משוער)</div></div>
               <div className="stat" style={{ color: "var(--bad)" }}><div className="n">{droneCount}</div><div className="c">רחפנים נספו</div></div>
             </div>
           ) : (
             <div className="endrow">
-              <div className="stat"><div className="n">420</div><div className="c">דונם טופלו</div></div>
-              <div className="stat"><div className="n">1:48</div><div className="c">שעות בפועל</div></div>
+              <div className="stat"><div className="n">{missionArea.toLocaleString("he-IL")}</div><div className="c">דונם טופלו</div></div>
+              <div className="stat"><div className="n">{durationHM}</div><div className="c">שעות (משוער)</div></div>
               <div className="stat"><div className="n">{droneCount}</div><div className="c">רחפנים</div></div>
             </div>
           )}
@@ -740,6 +763,8 @@ export default function LiveMap() {
         pad={pad}
         operator={crew.op}
         supervisor={crew.sup}
+        durationHM={durationHM}
+        areaDunam={missionArea}
       />
     </div>
   );
