@@ -627,7 +627,7 @@ export default function LiveMap() {
               <div className="mission">משימה: ריסוס פרדסים — עמק השרון</div>
               <div className="sub">
                 <span>שטח יעד: <b>420 דונם</b></span>
-                <span>רחפנים: <b>4</b></span>
+                <span>רחפנים: <b>{droneCount}</b></span>
                 <span>חלון זמן: <b>2:00 שעות</b></span>
               </div>
             </>
@@ -696,13 +696,13 @@ export default function LiveMap() {
             <div className="endrow">
               <div className="stat"><div className="n">~1,240</div><div className="c">דונם ימי</div></div>
               <div className="stat"><div className="n">1:48</div><div className="c">שעות בפועל</div></div>
-              <div className="stat" style={{ color: "var(--bad)" }}><div className="n">4</div><div className="c">רחפנים נספו</div></div>
+              <div className="stat" style={{ color: "var(--bad)" }}><div className="n">{droneCount}</div><div className="c">רחפנים נספו</div></div>
             </div>
           ) : (
             <div className="endrow">
               <div className="stat"><div className="n">420</div><div className="c">דונם טופלו</div></div>
               <div className="stat"><div className="n">1:48</div><div className="c">שעות בפועל</div></div>
-              <div className="stat"><div className="n">4</div><div className="c">רחפנים</div></div>
+              <div className="stat"><div className="n">{droneCount}</div><div className="c">רחפנים</div></div>
             </div>
           )}
           <div className="contact"><b>Revi-Control</b> · תוכנת מרכז השליטה · צרו קשר להדגמה</div>
