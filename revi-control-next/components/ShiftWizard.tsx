@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import type { Geo } from "@/components/ZonePicker";
 import WeatherStep from "@/components/WeatherStep";
 import WeightStep from "@/components/WeightStep";
+import ZoneWeather from "@/components/ZoneWeather";
 import { GEO, GEO_OCEAN, DRONE_SPEC } from "@/lib/config";
 
 // Deterministic per-drone battery (same rule as the fleet grid).
@@ -247,6 +248,9 @@ export default function ShiftWizard() {
                 <div className="wz-ico">⛵</div><b>ספינה</b><p>שיגור מספינה בים · חד-כיווני במשימת ים</p>
               </button>
             </div>
+            <ZoneWeather scenario={scenario} center={geo
+              ? [(geo.zone.s + geo.zone.n) / 2, (geo.zone.w + geo.zone.e) / 2]
+              : (isOcean ? GEO_OCEAN.center : GEO.center)} />
             <div className="wz-mapwrap">
               <ZonePicker scenario={scenario} value={geo} onChange={setGeo} />
               <div className="wz-maptag">

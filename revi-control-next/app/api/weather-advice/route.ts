@@ -5,7 +5,7 @@ export const maxDuration = 30; // allow the Claude call room (Pro plans)
 
 // Haiku = fast, finishes well under the serverless timeout so advice never
 // silently falls back to "מחושב". Override with CLAUDE_MODEL env if desired.
-const MODEL = process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001";
+const MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-5";
 
 // GET /api/weather-advice → health check. Reports whether the key is configured
 // and, with ?live=1, makes a tiny real call to confirm it actually works.
@@ -54,7 +54,9 @@ export async function POST(req: Request) {
       '{"headline":"משפט קצר","reasons":["..."],"operatorTips":["..."]}. ' +
       "היצמד לפסיקת ה-verdict שסופקה. reasons = עד 3 פריטים, כל אחד עד 12 מילים. " +
       "operatorTips = עד 3 פריטים, כל אחד עד 12 מילים, הנחיות מעשיות למניעת סחף תרסיס. " +
-      "עברית מקצועית ותמציתית. שמור על התשובה קצרה כדי שה-JSON יהיה שלם.";
+      "כתוב עברית מקצועית ותקנית בלבד — מונחים חקלאיים/תעופתיים נכונים (רוח, סחף, גובה טיסה, נתיב, מרווח). " +
+      "אסור להשתמש במילים לא סטנדרטיות, סלנג, או ניסוח משובש. כל משפט חייב להיות ברור לטייס. " +
+      "שמור על התשובה קצרה כדי שה-JSON יהיה שלם.";
     const user = JSON.stringify({
       scenario: body.scenario,
       verdict: base.verdict,
