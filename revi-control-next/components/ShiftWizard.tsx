@@ -284,7 +284,7 @@ export default function ShiftWizard() {
                 <span>🛩 גובה ריסוס</span>
                 <b>{flyAlt} מ׳</b>
               </div>
-              <input type="range" min={DRONE_SPEC.minAltM} max={DRONE_SPEC.maxAltM} value={flyAlt}
+              <input type="range" step={0.5} min={DRONE_SPEC.minAltM} max={DRONE_SPEC.maxAltM} value={flyAlt}
                 onChange={e => setAltM(+e.target.value)} />
               <div className="wz-alt-scale"><span>{DRONE_SPEC.minAltM} מ׳ (מינ׳ יצרן)</span><span>{DRONE_SPEC.maxAltM} מ׳ (מקס׳ יצרן)</span></div>
               <div className="wz-note">

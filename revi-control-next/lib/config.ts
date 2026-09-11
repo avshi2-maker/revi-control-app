@@ -38,21 +38,24 @@ export const GEO_OCEAN = {
   zoom: 11,
 };
 
-// Drone hardware spec (demo manufacturer figures) for weight & balance checks.
-// 1 L of spray liquid ≈ 1 kg. MTOW = max takeoff weight = the warranty limit.
+// Drone hardware spec — real DJI Agras T50 figures (spraying config).
+// 1 L of spray liquid ≈ 1 kg. MTOW = max takeoff weight = the warranty/safety limit.
 export const DRONE_SPEC = {
-  model: "Revi-Spray X40",
-  dryKg: 38,          // empty weight incl. battery
-  maxPayloadKg: 40,   // manufacturer max payload
-  mtowKg: 90,         // max takeoff weight (warranty / safety limit)
-  tankMaxL: 45,       // spray tank capacity
-  sensorKitKg: 1.5,   // optional extra sensor package
-  coverageDunamFull: 90000, // area one drone covers on a full battery — tuned so ~10 drones cover the max zone
-  flightMinutesFull: 25,  // flight endurance on a full battery (minutes)
-  rangeKmFull: 20,        // flight range on a full battery (km)
-  returnReserve: 1.2,     // safety factor on the distance needed to get home
-  minAltM: 2,             // manufacturer min spray altitude (m above target)
-  maxAltM: 12,            // manufacturer max spray altitude (m)
+  model: "DJI Agras T50",
+  dryKg: 52,          // weight incl. battery (39.9 kg excl. battery + 12.1 kg battery)
+  maxPayloadKg: 40,   // operating spray payload
+  mtowKg: 92,         // max takeoff weight, spraying, sea level
+  tankMaxL: 40,       // spray tank volume (L)
+  sensorKitKg: 1.5,   // optional extra sensor package (not a T50 stock item)
+  windMaxMps: 6,      // max wind resistance (matches the land no-go threshold)
+  minAltM: 1.5,       // spray altitude — radar stabilization min
+  maxAltM: 8,         // realistic spray ceiling (airframe/radar capable to 30 m)
+  sprayWidthM: 11,    // effective spray width at 3 m height (4–11 m)
+  // ── Illustrative demo-scale values (the map area is cinematic, not literal) ──
+  coverageDunamFull: 90000, // area one drone covers per battery — tuned so ~10 drones cover the max zone
+  flightMinutesFull: 9,     // realistic loaded flight time (T50 ≈ 7–9 min)
+  rangeKmFull: 20,          // range budget for the gate (real configurable radius: 2000 m)
+  returnReserve: 1.2,       // safety factor on the distance needed to get home
 };
 
 // Max spray-zone area allowed when resizing (dunam), per scenario — blocks oversizing.

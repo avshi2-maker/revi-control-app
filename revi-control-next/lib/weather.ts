@@ -31,8 +31,9 @@ export interface Advice {
   source: "fallback" | "ai";
 }
 
+import { DRONE_SPEC } from "./config";
 const AIRSPEED = 10; // typical spray-drone airspeed, m/s
-const ALT_MIN = 2, ALT_MAX = 12; // manufacturer spray-altitude window (m)
+const ALT_MIN = DRONE_SPEC.minAltM, ALT_MAX = DRONE_SPEC.maxAltM; // real spray-altitude window
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 export function windDirHe(deg: number): string {
