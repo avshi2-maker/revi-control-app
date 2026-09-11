@@ -354,7 +354,7 @@ export default function ShiftWizard() {
 
       <div className="wz-foot">
         <button className="wz-nav" disabled={step === 0} onClick={() => setStep(s => s - 1)}>→ הקודם</button>
-        <a className="wz-nav ghost" href="/">חזרה למפה</a>
+        <a className="wz-nav ghost" href="/verification">אימות נתונים</a>
         {step < LAST && (
           <button className="wz-nav primary" disabled={!canNext} onClick={() => setStep(s => s + 1)}>הבא ←</button>
         )}
