@@ -6,7 +6,7 @@ import type { Geo } from "@/components/ZonePicker";
 import WeatherStep from "@/components/WeatherStep";
 import WeightStep from "@/components/WeightStep";
 import ZoneWeather from "@/components/ZoneWeather";
-import { GEO, GEO_OCEAN, DRONE_SPEC } from "@/lib/config";
+import { GEO, GEO_OCEAN, DRONE_SPEC, APP_VERSION } from "@/lib/config";
 
 // Deterministic per-drone battery (same rule as the fleet grid).
 function battery(n: number) { return 70 + ((n * 17 + 3) % 30); }
@@ -360,6 +360,7 @@ export default function ShiftWizard() {
         <button className="wz-nav" disabled={step === 0} onClick={() => setStep(s => s - 1)}>→ הקודם</button>
         <a className="wz-nav ghost" href="/pitch">מצגת</a>
         <a className="wz-nav ghost" href="/verification">אימות נתונים</a>
+        <span className="wz-ver">v{APP_VERSION}</span>
         {step < LAST && (
           <button className="wz-nav primary" disabled={!canNext} onClick={() => setStep(s => s + 1)}>הבא ←</button>
         )}

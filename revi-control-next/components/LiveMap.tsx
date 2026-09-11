@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { COLORS, NAMES, GEO, GEO_OCEAN, TIMELINE as T, STATE_HE, DRONE_SPEC, MAX_ZONE_DUNAM } from "@/lib/config";
+import { COLORS, NAMES, GEO, GEO_OCEAN, TIMELINE as T, STATE_HE, DRONE_SPEC, MAX_ZONE_DUNAM, APP_VERSION } from "@/lib/config";
 import {
   DUR, clamp, ease, boustro, pathLen, pointAt, evalDrone,
   batteryAt, tankAt, phaseText, fmtHM, fmtMS, type Pt,
@@ -400,12 +400,14 @@ export default function LiveMap() {
       const launched = s >= T.launch[0];
       const ftEl = g("flightTime"), blEl = g("battLeft"), ptEl = g("ptimer");
       if (ftEl) ftEl.textContent = fmtMS(launched ? Math.max(0, s - T.launch[0]) : 0);
+      const mins = Math.max(0, Math.round(DRONE_SPEC.flightMinutesFull * (minBat / 100)));
+      // Land low-battery-time alert: warn while flying if remaining time is critical.
+      const battLow = launched && !ocean && s < T.rth[1] && (minBat < 22 || mins <= 2);
       if (blEl) {
-        const mins = Math.max(0, Math.round(DRONE_SPEC.flightMinutesFull * (minBat / 100)));
-        blEl.textContent = launched ? `~${mins} דק׳` : "--";
-        blEl.style.color = minBat < 25 ? "var(--bad)" : minBat < 45 ? "var(--warn)" : "var(--good)";
+        blEl.textContent = launched ? `~${mins} דק׳${battLow ? " ⚠" : ""}` : "--";
+        blEl.style.color = (battLow || minBat < 25) ? "var(--bad)" : minBat < 45 ? "var(--warn)" : "var(--good)";
       }
-      if (ptEl) ptEl.classList.toggle("live", launched && s < T.rth[1]);
+      if (ptEl) { ptEl.classList.toggle("live", launched && s < T.rth[1]); ptEl.classList.toggle("lowbat", battLow); }
       g("fleetState").textContent = s < T.launch[0] ? "בהמתנה" : s < T.spray[1] ? "משימה פעילה" : s < T.rth[1] ? (ocean ? "רחפנים נספו בים" : "חוזרים לבסיס") : "הושלם";
     }
     let lastPhase = "";
@@ -706,7 +708,7 @@ export default function LiveMap() {
         <div id="topbar">
           <div className="brand">
             <div className="logo" />
-            <div><b>Revi-Control</b><span>{isOcean ? "Bacteria Spray · Mediterranean" : "Autonomous Spray Fleet · Live Map"}</span></div>
+            <div><b>Revi-Control</b><span>{isOcean ? "Bacteria Spray · Mediterranean" : "Autonomous Spray Fleet"} · v{APP_VERSION}</span></div>
           </div>
           <div className="wallclock"><span id="wcTime">--:--:--</span><span id="wcDate">--/--/----</span></div>
           <div className="kpis">

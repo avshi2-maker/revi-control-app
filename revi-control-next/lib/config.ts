@@ -1,3 +1,6 @@
+// App version — bump on every deploy so the footer shows what's live.
+export const APP_VERSION = "1.6.0";
+
 // Single place to tweak the whole simulation.
 
 export const COLORS = ["#38bdf8", "#a78bfa", "#fb7185", "#facc15"];

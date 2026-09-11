@@ -75,6 +75,7 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
 .p-timer b{color:var(--ink);font-variant-numeric:tabular-nums;font-size:13px}
 .p-timer.live{background:rgba(56,224,138,.06)}
 .p-timer.live b#flightTime{color:var(--spray)}
+.p-timer.lowbat{background:rgba(248,113,113,.12);animation:rec 1.4s steps(1) infinite}
 
 /* land safe-return warning banner */
 .rtbwarn{position:absolute;top:64px;left:50%;transform:translateX(-50%);z-index:750;display:none;
@@ -426,6 +427,7 @@ body.record #replay, body.record #scrub, body.record #hint{display:none!importan
 .wz-nav.primary{background:var(--accent);color:#03111e;border-color:var(--accent);margin-inline-start:auto}
 .wz-nav.primary:hover:not(:disabled){opacity:.85}
 .wz-nav.ghost{color:var(--muted)}
+.wz-ver{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;opacity:.7;align-self:center}
 .zw{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding:11px 15px;
   border-radius:12px;border:1.5px solid var(--line);background:var(--panel2);font-size:13px}
 .zw.go{border-color:rgba(52,211,153,.45)}

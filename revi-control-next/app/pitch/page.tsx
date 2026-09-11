@@ -1,3 +1,5 @@
+import { APP_VERSION } from "@/lib/config";
+
 export const metadata = { title: "Revi-Control — מצגת מכר" };
 
 type F = { icon: string; title: string; body: string };
@@ -81,7 +83,7 @@ export default function PitchPage() {
         <div className="pt-cta-top">
           <a className="pt-btn" href="/">▶ הפעל הדגמה</a>
         </div>
-        <div className="pt-contact"><b>אבשי ספיר</b> · avshi2@gmail.com · Revi-Control</div>
+        <div className="pt-contact"><b>אבשי ספיר</b> · avshi2@gmail.com · Revi-Control · v{APP_VERSION}</div>
       </section>
     </div>
   );
