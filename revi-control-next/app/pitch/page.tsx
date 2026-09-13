@@ -84,7 +84,7 @@ export default function PitchPage() {
         <div className="pt-cta-top">
           <a className="pt-btn" href="/">▶ הפעל הדגמה</a>
         </div>
-        <div className="pt-contact"><b>אבשי ספיר</b> · avshi2@gmail.com · Revi-Control · v{APP_VERSION}</div>
+        <div className="pt-contact"><b>אבשי ספיר</b> · avshi2@gmail.com · 📞 050-5231042 · Revi-Control · v{APP_VERSION}</div>
       </section>
     </div>
   );

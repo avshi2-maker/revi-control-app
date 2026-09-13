@@ -374,7 +374,7 @@ export default function ShiftWizard() {
         <button className="wz-nav" disabled={step === 0} onClick={() => setStep(s => s - 1)}>→ הקודם</button>
         <a className="wz-nav ghost" href="/pitch">מצגת</a>
         <a className="wz-nav ghost" href="/verification">אימות נתונים</a>
-        <span className="wz-ver">v{APP_VERSION}</span>
+        <span className="wz-ver">📞 050-5231042 · v{APP_VERSION}</span>
         {step < LAST && (
           <button className="wz-nav primary" disabled={!canNext} onClick={() => setStep(s => s + 1)}>הבא ←</button>
         )}

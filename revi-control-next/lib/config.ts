@@ -1,5 +1,5 @@
 // App version — bump on every deploy so the footer shows what's live.
-export const APP_VERSION = "1.7.0";
+export const APP_VERSION = "1.8.0";
 
 // Single place to tweak the whole simulation.
 

@@ -1,0 +1,346 @@
+<meta charset="utf-8">
+<title>Revi-Control — מסמך מערכת מלא</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: "Segoe UI", "Arial", sans-serif; direction: rtl; text-align: right;
+    color: #12222b; line-height: 1.65; margin: 0; background: #fff; font-size: 11pt;
+  }
+  .wrap { max-width: 190mm; margin: 0 auto; padding: 0 4mm; }
+
+  /* ── Cover ── */
+  .cover {
+    min-height: 250mm; display: flex; flex-direction: column; justify-content: center;
+    text-align: center; page-break-after: always;
+    background: linear-gradient(160deg, #06202b 0%, #0a3a3f 55%, #0d5c4e 100%);
+    color: #eafcf6; margin: -0 -16mm; padding: 40mm 20mm;
+  }
+  .cover .logo {
+    width: 78px; height: 78px; margin: 0 auto 22px; border-radius: 20px;
+    background: linear-gradient(135deg, #22d3ee, #34d399); position: relative;
+    box-shadow: 0 10px 40px rgba(52,211,153,.4);
+  }
+  .cover .logo::after {
+    content: "◈"; position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; font-size: 40px; color: #06202b;
+  }
+  .cover h1 { font-size: 42pt; margin: 0 0 6px; letter-spacing: 1px; font-weight: 800; }
+  .cover .sub { font-size: 16pt; color: #7fe3cf; margin-bottom: 30px; font-weight: 600; }
+  .cover .lede { font-size: 12pt; max-width: 150mm; margin: 0 auto; color: #cdeee6; line-height: 1.8; }
+  .cover .meta {
+    margin-top: 44px; font-size: 10pt; color: #8fd6c6; border-top: 1px solid rgba(127,227,207,.3);
+    padding-top: 18px; display: inline-block;
+  }
+  .cover .ver { display: inline-block; margin-top: 10px; background: rgba(52,211,153,.18);
+    color: #7fe3cf; padding: 4px 14px; border-radius: 20px; font-size: 9pt; font-weight: 700; }
+
+  /* ── Sections ── */
+  h2 {
+    font-size: 17pt; color: #0d5c4e; border-bottom: 3px solid #22d3ee;
+    padding-bottom: 6px; margin: 26px 0 12px; font-weight: 800; page-break-after: avoid;
+  }
+  h3 { font-size: 12.5pt; color: #0a3a3f; margin: 18px 0 6px; font-weight: 700; page-break-after: avoid; }
+  p { margin: 8px 0; }
+  .lead { font-size: 11.5pt; color: #2a4048; }
+  .section { page-break-inside: avoid; }
+
+  /* ── Callout ── */
+  .callout {
+    background: #ecfdf5; border-right: 4px solid #10b981; border-radius: 8px;
+    padding: 12px 16px; margin: 14px 0; font-size: 10.5pt; color: #064e3b;
+  }
+  .callout.blue { background: #ecfeff; border-right-color: #06b6d4; color: #0c4a54; }
+  .callout.amber { background: #fffbeb; border-right-color: #f59e0b; color: #713f12; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10pt; page-break-inside: auto; }
+  th { background: #0d5c4e; color: #fff; padding: 8px 10px; text-align: right; font-weight: 700; }
+  td { padding: 7px 10px; border-bottom: 1px solid #d7e6e1; vertical-align: top; }
+  tr:nth-child(even) td { background: #f4faf8; }
+  table.real th { background: #0d5c4e; }
+  table.demo th { background: #b45309; }
+  .k { font-weight: 700; color: #0d5c4e; width: 30%; }
+  .demo .k { color: #b45309; }
+
+  /* ── Feature grid ── */
+  .feat { display: table; width: 100%; margin: 6px 0; page-break-inside: avoid; }
+  .feat .ic { display: table-cell; width: 34px; font-size: 18pt; vertical-align: top; padding-top: 2px; }
+  .feat .tx { display: table-cell; vertical-align: top; }
+  .feat .tx b { color: #0d5c4e; font-size: 11pt; }
+  .feat .tx p { margin: 2px 0 0; font-size: 10pt; color: #33474e; }
+
+  .adv { margin: 6px 0; padding: 10px 14px; background: #f4faf8; border-radius: 8px; page-break-inside: avoid; }
+  .adv b { color: #0d5c4e; font-size: 11.5pt; }
+  .adv span { display: block; font-size: 10pt; color: #33474e; margin-top: 2px; }
+
+  ol.up { padding-right: 20px; }
+  ol.up li { margin: 6px 0; font-size: 10.5pt; }
+
+  .pagebreak { page-break-before: always; }
+  .foot { margin-top: 30px; padding-top: 14px; border-top: 2px solid #22d3ee; font-size: 9.5pt; color: #5a7078; text-align: center; }
+  .contact-card {
+    background: linear-gradient(135deg, #06202b, #0d5c4e); color: #eafcf6;
+    border-radius: 12px; padding: 22px 26px; margin: 18px 0; text-align: center;
+  }
+  .contact-card b { font-size: 14pt; display: block; margin-bottom: 6px; }
+  .contact-card span { color: #9fe3d3; font-size: 11pt; }
+
+  /* ── Share bar (screen only, hidden on print) ── */
+  .share { text-align: center; margin: 20px 0 8px; }
+  .share button, .share a {
+    display: inline-block; margin: 4px 5px; padding: 10px 20px; border: none; cursor: pointer;
+    border-radius: 8px; font-family: inherit; font-size: 11pt; font-weight: 700;
+    text-decoration: none; color: #fff;
+  }
+  .share button { background: #0d5c4e; }
+  .share a.mail { background: #06b6d4; }
+  .share a.wa { background: #25d366; }
+  @media print { .no-print { display: none !important; } }
+</style>
+
+<!-- ═══════════════ COVER ═══════════════ -->
+<div class="cover">
+  <div class="logo"></div>
+  <h1>Revi-Control</h1>
+  <div class="sub">מרכז שליטה לצי רחפני ריסוס אוטונומי</div>
+  <div class="lede">
+    תוכנת ענן שהופכת מבצע ריסוס מורכב לתהליך מודרך, בטוח ומתועד —
+    עם שכבת בינה מלאכותית הקובעת בזמן אמת האם מותר לטוס וכיצד להטיס נכון.
+    עברית מלאה, ללא התקנה, נגישה מכל דפדפן.
+  </div>
+  <div class="meta">
+    מסמך מערכת מלא · לעיון לקוחות ומשקיעים<br>
+    אבשי ספיר · avshi2@gmail.com · ספטמבר 2026
+    <div class="ver">גרסה 1.7.0</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ═══════════════ EXECUTIVE SUMMARY ═══════════════ -->
+  <div class="section">
+    <h2>תקציר מנהלים</h2>
+    <p class="lead">
+      Revi-Control היא תוכנת מרכז-שליטה לצי רחפני ריסוס אוטונומיים. המערכת מלווה את המפעיל
+      משלב תכנון המשמרת ועד לדוח הסיום — דרך אשף בן תשעה שלבים החוסם התקדמות כל עוד תנאי
+      בטיחות אינם מתקיימים: מזג אוויר, משקל ואיזון, טווח סוללה, אישורי מרחב אווירי, ומיקום מפעיל בטוח.
+    </p>
+    <p>
+      בליבת המערכת מנוע בינה מלאכותית (Claude) המנתח תחזית מזג אוויר חיה ומחזיר החלטת
+      GO / זהירות / NO-GO עם נימוקים והנחיות טיסה מקצועיות בעברית. במהלך המשימה מוצגת מפת
+      לוויין חיה עם צי הרחפנים, דפוס טיסה נגד סחף, מפת בריאות צמח (NDVI) לריסוס מדויק, ובקרות
+      סוללה וטווח בזמן אמת. עם סיום המשימה מופק דוח מלא לתיעוד ולרגולציה.
+    </p>
+    <div class="callout blue">
+      <b>הבידול המרכזי:</b> הכלים הקיימים בשוק מתמקדים בטיסה ובמיפוי. אף מתחרה אינו אומר למפעיל,
+      בזמן אמת, האם התנאים מתאימים וכיצד להטיס כדי למנוע סחף וכשל בטיחותי. זהו הפער ש-Revi-Control ממלאת.
+    </div>
+  </div>
+
+  <!-- ═══════════════ THE GAP ═══════════════ -->
+  <div class="section">
+    <h2>הפער בשוק</h2>
+    <p>
+      ריסוס חקלאי ברחפנים צומח במהירות, אך התוכנה הזמינה נשארה מאחור. מערכות היצרן מתמקדות
+      בהטסת הרחפן הבודד ובתכנון מסלול — לא בקבלת ההחלטות המבצעית של המפעיל בשטח, ולא בניהול
+      <b>צי</b> שלם תחת אילוצי מזג אוויר, סוללה ובטיחות.
+    </p>
+    <p>
+      התוצאה: מפעילים מקבלים החלטות קריטיות (האם לטוס? באיזה גובה? כמה רחפנים?) על סמך ניסיון
+      אישי בלבד, ללא כלי תומך-החלטה. טעות שכיחה — סחף תרסיס לשטח שכן, שיגור ברוח חזקה, או צי
+      שאזל לו הסוללה הרחק מהבסיס — עולה כסף, אחריות יצרן, ולעיתים בטיחות.
+    </p>
+  </div>
+
+  <!-- ═══════════════ SYSTEM OVERVIEW ═══════════════ -->
+  <div class="section">
+    <h2>סקירת המערכת</h2>
+    <p>
+      Revi-Control בנויה כאפליקציית ענן (Next.js) הרצה בכל דפדפן, בעברית מלאה RTL, ללא התקנה.
+      היא מורכבת משלושה מסכים מרכזיים:
+    </p>
+    <h3>1 · אשף פתיחת משמרת</h3>
+    <p>תהליך מודרך בן תשעה שלבים שמוציא משימה תקינה בדקות — גם ממפעיל לא-מיומן.</p>
+    <h3>2 · תא הטייס (Cockpit)</h3>
+    <p>מפת לוויין חיה עם צי הרחפנים בפעולה, שעון אמת, בקרות סוללה וטווח, ושכבות דפוס-סחף ו-NDVI.</p>
+    <h3>3 · תחנת פיקוד (Station)</h3>
+    <p>תצוגה ייעודית לשידור מרחפן ה"עין" — רחפן צילום המשגר ראשון, סוקר מגובה ומשדר לצוות הפיקוד.</p>
+    <p>
+      בנוסף קיימים עמוד <b>מצגת מכר</b> ועמוד <b>אימות נתונים</b> (שקיפות מלאה בין נתוני יצרן אמיתיים
+      לערכי הדגמה).
+    </p>
+  </div>
+
+  <!-- ═══════════════ WIZARD FLOW ═══════════════ -->
+  <div class="section pagebreak">
+    <h2>זרימת העבודה — אשף תשעת השלבים</h2>
+    <p>כל שלב חוסם התקדמות עד שתנאי הבטיחות מתקיימים:</p>
+    <table>
+      <thead><tr><th>שלב</th><th>שם</th><th>תנאי מעבר (חסימה)</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td class="k">תרחיש</td><td>בחירת ריסוס יבשתי או ימי</td></tr>
+        <tr><td>2</td><td class="k">מזג אוויר</td><td>יועץ ה-AI חייב לאשר — NO-GO חוסם</td></tr>
+        <tr><td>3</td><td class="k">רחפנים</td><td>לפחות רחפן אחד נבחר (עד כל הצי בלחיצה)</td></tr>
+        <tr><td>4</td><td class="k">משקל ואיזון</td><td>חריגה מ-MTOW חוסמת שיגור</td></tr>
+        <tr><td>5</td><td class="k">מפה + שיגור</td><td>מיקום המפעיל חייב להיות מחוץ לאזור הריסוס</td></tr>
+        <tr><td>6</td><td class="k">אישורים</td><td>מרחב אווירי פנוי + מיכלים תקינים</td></tr>
+        <tr><td>7</td><td class="k">אלגוריתם + גובה</td><td>בחירת דפוס כיסוי וגובה טיסה</td></tr>
+        <tr><td>8</td><td class="k">סיכום</td><td>סוללה וטווח חייבים לכסות את האזור</td></tr>
+        <tr><td>9</td><td class="k">שיגור</td><td>אישור סופי → מעבר לתא הטייס</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════ FULL FEATURE LIST ═══════════════ -->
+  <div class="section">
+    <h2>יכולות המערכת · א׳–ת׳</h2>
+
+    <div class="feat"><div class="ic">🧭</div><div class="tx"><b>אשף משמרת מודרך (9 שלבים)</b><p>מפעיל מוציא משימה תקינה בדקות. פחות טעויות, פחות תלות במומחה.</p></div></div>
+    <div class="feat"><div class="ic">🤖</div><div class="tx"><b>יועץ מזג אוויר מבוסס AI</b><p>מנוע Claude מנתח תחזית חיה (Open-Meteo) ומחזיר GO / זהירות / NO-GO עם נימוקים והנחיות טיסה בעברית מקצועית.</p></div></div>
+    <div class="feat"><div class="ic">🌬</div><div class="tx"><b>דפוס טיסה נגד סחף (Anti-Drift Crab)</b><p>חישוב זווית סחיפה חיה לפי הרוח; הרחפן מכוון גופו נגד הרוח והתרסיס נוחת על היעד. מוצג כדיאגרמת וקטורים על המפה.</p></div></div>
+    <div class="feat"><div class="ic">📍</div><div class="tx"><b>בקרת מיקום מפעיל</b><p>המערכת אוכפת שנקודת השיגור תמצא תמיד מחוץ לאזור הריסוס — הגנה מפני חשיפה כימית והתנגשות עם רחפנים חוזרים. ייחודי ל-Revi-Control.</p></div></div>
+    <div class="feat"><div class="ic">⚖️</div><div class="tx"><b>משקל ואיזון לפי מפרט אמיתי</b><p>בדיקת משקל המראה מול מגבלת היצרן (DJI Agras T50 · MTOW 92 ק״ג). חריגה חוסמת שיגור — מונע נזק ואובדן אחריות.</p></div></div>
+    <div class="feat"><div class="ic">🔋</div><div class="tx"><b>בקרת סוללה וטווח</b><p>בדיקה האם הצי מסוגל לכסות את השטח לאחר המעבר לאזור. מרחק הבסיס מפחית כיסוי — יבשה הלוך-חזור, ים חד-כיווני.</p></div></div>
+    <div class="feat"><div class="ic">📹</div><div class="tx"><b>רחפן צילום "עין" + תחנת פיקוד</b><p>רחפן ייעודי ממריא ראשון, סוקר מגובה ומשדר לתצוגת פיקוד. במשימה יבשתית חוזר ונוחת.</p></div></div>
+    <div class="feat"><div class="ic">🌱</div><div class="tx"><b>ריסוס מדויק (מפת בריאות NDVI)</b><p>שכבת בריאות-צמח מסמנת אזורים בריאים/מוצקים — הריסוס מתרכז היכן שצריך. חיסכון משמעותי בחומר.</p></div></div>
+    <div class="feat"><div class="ic">🛰</div><div class="tx"><b>מודעות מעקב-תבליט (ראדאר)</b><p>ה-T50 כולל ראדאר מערך-מדורג למעקב תבליט; המערכת מציגה סטטוס "פעיל" לטייס בזמן המשימה.</p></div></div>
+    <div class="feat"><div class="ic">🛩</div><div class="tx"><b>גובה ריסוס מומלץ ע״י AI</b><p>המלצת גובה אופטימלי לפי הרוח ומגבלות היצרן — רוח חזקה: נמוך יותר; רגוע: גבוה לכיסוי רחב. ניתן לכוונון ידני.</p></div></div>
+    <div class="feat"><div class="ic">🗺</div><div class="tx"><b>מזג אוויר לאזור המדויק</b><p>תחזית חיה לנקודה שבה מוצב האזור בפועל — כולל שינויי רוח אזוריים לפני שיגור.</p></div></div>
+    <div class="feat"><div class="ic">⏱</div><div class="tx"><b>אומדן זמן משימה מחושב</b><p>משך המשימה מחושב מהשטח, מהירות, רוח, דפוס כיסוי, מעבר ומילויים — מחולק לצי.</p></div></div>
+    <div class="feat"><div class="ic">🕐</div><div class="tx"><b>שעון אמת וטיימר טיסה</b><p>שעון קיר חי (תאריך ושעה) + טיימר טיסה מרגע השיגור וסוללה נותרת בספירה לאחור.</p></div></div>
+    <div class="feat"><div class="ic">⚠️</div><div class="tx"><b>התראת סוללה לחזרה בטוחה</b><p>ביבשה — התראה כפולה: לפי זמן טיסה נותר (טיימר אדום מהבהב) ולפי מרחק מהבסיס (באנר אזהרה).</p></div></div>
+    <div class="feat"><div class="ic">📄</div><div class="tx"><b>דוח משימה אוטומטי</b><p>דוח מלא (מפעיל, זמנים, שטח, כיסוי, עלות במשימת ים) — מסירה מיידית ותיעוד לרגולציה.</p></div></div>
+    <div class="feat"><div class="ic">🌊</div><div class="tx"><b>מצב ימי (ריסוס בקטריאלי)</b><p>שיגור חד-כיווני מספינה, רחפנים מתכלים, כלכלת עלות מוכרת בחוזה.</p></div></div>
+    <div class="feat"><div class="ic">🔍</div><div class="tx"><b>שקיפות מלאה (אימות נתונים)</b><p>עמוד ייעודי המפריד בין נתוני יצרן אמיתיים לערכי הדגמה — ומציג מסלול שדרוג לפריסה אמיתית.</p></div></div>
+    <div class="feat"><div class="ic">☁️</div><div class="tx"><b>ענן · עברית · ללא התקנה</b><p>רץ בכל דפדפן, עברית מלאה RTL, נגיש מיידית לכל לקוח — אפס חיכוך טכני.</p></div></div>
+  </div>
+
+  <!-- ═══════════════ ANTI-DRIFT DEEP DIVE ═══════════════ -->
+  <div class="section pagebreak">
+    <h2>מנגנון דפוס נגד סחף — הרחבה טכנית</h2>
+    <p>
+      כשהרוח נושבת אופקית במהירות V<sub>רוח</sub>, רחפן הטס בקו ריסוס ישר ייסחף הצידה — התרסיס נוחת
+      מחוץ ליעד. מנגנון ה-Anti-Drift Crab פותר זאת בשלושה רכיבים הפועלים יחד:
+    </p>
+    <h3>1 · זווית הטייה (Crab Angle)</h3>
+    <p>
+      הרחפן מכוון את חרטומו אל תוך הרוח בדיוק בזווית: <b>זווית = arcsin(V<sub>רוח</sub> / V<sub>רחפן</sub>)</b>.
+      לרוח של 4 מ/ש ורחפן ב-7 מ/ש → כ-35°. גוף הרחפן מוטה נגד הרוח, אך מסלולו מעל הקרקע נשאר על נתיב הריסוס.
+    </p>
+    <h3>2 · פיית התרסיס נשארת אנכית</h3>
+    <p>הפייה מכוונת ישר מטה ללא תלות בהטיית גוף הרחפן — הנוזל נופל אנכית על הרצועה המיועדת, לא על השטח השכן.</p>
+    <h3>3 · צמצום מרווחי נתיבים</h3>
+    <p>המרווח בין נתיבים מהודק לפי הסחף המשוער כדי להבטיח חפיפה ללא פערים.</p>
+    <div class="callout">
+      <b>מה המערכת מציגה:</b> תצוגת HUD חיה על המפה עם שלושה וקטורים — נתיב מיועד (ירוק), כיוון הרחפן
+      בפועל (כחול, מוטה), ווקטור הרוח (אדום). זווית ה-crab, מהירות הרוח והסחף המשוער במטרים מתעדכנים
+      בזמן אמת ככל שנתוני מזג האוויר מתרעננים. גופי הרחפנים על המפה מסתובבים חזותית בזווית ההטיה בזמן ריסוס.
+    </div>
+  </div>
+
+  <!-- ═══════════════ REAL SPECS ═══════════════ -->
+  <div class="section">
+    <h2>מפרט חומרה אמיתי — DJI Agras T50</h2>
+    <p>ערכים אלו הם מפרט יצרן רשמי, נטענים חיה למנועי הבטיחות והחישוב של המערכת:</p>
+    <table class="real">
+      <thead><tr><th>פרמטר</th><th>ערך</th><th>מקור / הערה</th></tr></thead>
+      <tbody>
+        <tr><td class="k">דגם רחפן</td><td>DJI Agras T50</td><td>מפרט יצרן רשמי</td></tr>
+        <tr><td class="k">משקל (כולל סוללה)</td><td>52 ק״ג</td><td>39.9 ק״ג גוף + 12.1 ק״ג סוללה</td></tr>
+        <tr><td class="k">משקל המראה מרבי (MTOW)</td><td>92 ק״ג</td><td>ריסוס · גובה פני הים</td></tr>
+        <tr><td class="k">מטען ריסוס מרבי</td><td>40 ק״ג</td><td>Operating payload</td></tr>
+        <tr><td class="k">נפח מיכל תרסיס</td><td>40 ליטר</td><td>מערכת ריסוס כפולה</td></tr>
+        <tr><td class="k">עמידות רוח מרבית</td><td>6 מ/ש</td><td>תואם לסף ה-NO-GO היבשתי</td></tr>
+        <tr><td class="k">גובה ריסוס</td><td>1.5–8 מ׳</td><td>ייצוב ראדאר · חלון ריסוס מציאותי</td></tr>
+        <tr><td class="k">רוחב ריסוס אפקטיבי</td><td>11 מ׳</td><td>בגובה 3 מ׳ (טווח 4–11 מ׳)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════ ADVANTAGES ═══════════════ -->
+  <div class="section pagebreak">
+    <h2>יתרונות · יעילות · פשטות</h2>
+    <div class="adv"><b>דיוק</b><span>ריסוס נגד-סחף + מפת בריאות NDVI → פחות בזבוז חומר, פחות נזק סביבתי, פחות ריחוף לשטח שכן.</span></div>
+    <div class="adv"><b>בטיחות</b><span>בקרות משקל, סוללה, מיקום מפעיל וחזרה בטוחה — כולן חוסמות שיגור מסוכן לפני שהוא קורה.</span></div>
+    <div class="adv"><b>פשטות</b><span>אשף מודרך — גם מפעיל לא-מיומן מוציא משימה תקינה בדקות, בעברית מלאה, ללא הדרכה ארוכה.</span></div>
+    <div class="adv"><b>שקיפות</b><span>הפרדה גלויה בין נתונים אמיתיים להדגמה — בונה אמון מול לקוחות ומשקיעים.</span></div>
+    <div class="adv"><b>תקורה נמוכה</b><span>פיתוח ותחזוקה רזים, ענן ללא התקנה → מחיר תחרותי מול סוכנויות וכלים כבדים.</span></div>
+
+    <h3 style="margin-top:20px">טבלת השוואה — יכולת מול תועלת עסקית</h3>
+    <table>
+      <thead><tr><th>יכולת</th><th>תועלת ללקוח</th></tr></thead>
+      <tbody>
+        <tr><td class="k">יועץ AI למזג אוויר</td><td>מונע שיגור כושל ברוח/תנאים לא מתאימים — חוסך חומר וזמן</td></tr>
+        <tr><td class="k">דפוס נגד סחף</td><td>תרסיס מדויק על היעד — ציות סביבתי ופחות תלונות שכנים</td></tr>
+        <tr><td class="k">בקרת מיקום מפעיל</td><td>בטיחות אדם — מונע חשיפה כימית והתנגשות</td></tr>
+        <tr><td class="k">משקל ואיזון</td><td>שומר על אחריות היצרן — מונע נזק לרחפן יקר</td></tr>
+        <tr><td class="k">בקרת סוללה וטווח</td><td>מונע אובדן רחפן שאזלה לו הסוללה הרחק מהבסיס</td></tr>
+        <tr><td class="k">מפת NDVI</td><td>ריסוס משתנה-קצב — חיסכון ישיר בעלות החומר</td></tr>
+        <tr><td class="k">דוח אוטומטי</td><td>תיעוד לרגולציה ומסירה מיידית ללקוח</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════ TRANSPARENCY: DEMO vs REAL ═══════════════ -->
+  <div class="section">
+    <h2>שקיפות — הדגמה מול פריסה אמיתית</h2>
+    <div class="callout amber">
+      אנו מאמינים בשקיפות מלאה. חלק מהנתונים הם מפרט יצרן אמיתי (מוצג בטבלה שלמעלה), וחלקם ערכי
+      הדגמה להמחשה — משום שהמפה מוצגת בקנה-מידה קולנועי ולא ליטרלי. הטבלה הבאה מפרטת מה עדיין בהדגמה:
+    </div>
+    <table class="demo">
+      <thead><tr><th>פרמטר</th><th>מצב</th><th>הערה</th></tr></thead>
+      <tbody>
+        <tr><td class="k">טווח / כיסוי / זמן טיסה</td><td>מכויל להדגמה</td><td>המפה בקנה-מידה קולנועי; בפריסה מכוילים לשדה אמיתי</td></tr>
+        <tr><td class="k">שידור מצלמת "עין"</td><td>מדומה</td><td>מפה חיה + הדמיה. אינו וידאו אמיתי מרחפן</td></tr>
+        <tr><td class="k">מפת בריאות NDVI</td><td>נתונים מדומים</td><td>בפריסה: NDVI אמיתי מלוויין (Sentinel-2)</td></tr>
+        <tr><td class="k">מעקב תבליט (ראדאר)</td><td>חיווי סטטוס</td><td>היכולת אמיתית בחומרת T50; מוצג סטטוס, לא נתוני גובה חיים</td></tr>
+        <tr><td class="k">תרחיש ימי</td><td>המחשה</td><td>התאמת פלטפורמה — אינו מוצר מדף</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════ UPGRADE PATH ═══════════════ -->
+  <div class="section">
+    <h2>מסלול שדרוג לפריסה מסחרית</h2>
+    <p>בפריסה מסחרית, כל ערכי ההדגמה הופכים לאמיתיים ומחוברים לחומרה:</p>
+    <ol class="up">
+      <li>טעינת מפרט הרחפן האמיתי שברשותכם — כל שדה בטבלת הנתונים האמיתיים.</li>
+      <li>כיול המפה לגודל שדה אמיתי — טווחים, כיסוי וזמני טיסה הופכים לליטרליים.</li>
+      <li>חיבור טלמטריה וטיסה אמיתית דרך ה-SDK של היצרן / MAVLink.</li>
+      <li>שידור וידאו חי אמיתי מרחפן הצילום (WebRTC / RTMP).</li>
+      <li>אינטגרציית תחזית ורגולציה מקומית (רת״א / אישורי מרחב אווירי).</li>
+      <li>שמירת היסטוריית משימות, דוחות וחשבוניות בענן.</li>
+    </ol>
+  </div>
+
+  <!-- ═══════════════ CONTACT ═══════════════ -->
+  <div class="contact-card">
+    <b>מוכנים לראות בפעולה?</b>
+    <span>אבשי ספיר · avshi2@gmail.com · 📞 050-5231042 · Revi-Control · להדגמה חיה ולשיחת התאמה</span>
+  </div>
+
+  <div class="share no-print">
+    <button onclick="window.print()">🖨 הדפס / שמור PDF</button>
+    <a class="mail" id="mailBtn" href="#">✉ שלח במייל</a>
+    <a class="wa" id="waBtn" href="#" target="_blank" rel="noopener">💬 שתף בוואטסאפ</a>
+  </div>
+
+  <div class="foot">
+    Revi-Control · מרכז שליטה לצי ריסוס אוטונומי · גרסה 1.8.0 · 📞 050-5231042 · avshi2@gmail.com · ספטמבר 2026
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    var url = location.href;
+    var txt = 'Revi-Control — מרכז שליטה לצי רחפני ריסוס אוטונומי. מצגת המערכת: ' + url;
+    var m = document.getElementById('mailBtn');
+    var w = document.getElementById('waBtn');
+    if (m) m.href = 'mailto:?subject=' + encodeURIComponent('Revi-Control — מצגת מערכת') + '&body=' + encodeURIComponent(txt);
+    if (w) w.href = 'https://wa.me/?text=' + encodeURIComponent(txt);
+  })();
+</script>
