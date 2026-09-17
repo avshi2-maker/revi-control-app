@@ -7,6 +7,25 @@ export const maxDuration = 30; // allow the Claude call room (Pro plans)
 // silently falls back to "מחושב". Override with CLAUDE_MODEL env if desired.
 const MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-5";
 
+// ── Abuse guard (OWASP A01/A06:2025) — the endpoint spends money per AI call, so
+// throttle bursts per client IP. FAIL-OPEN and FUNCTIONALITY-SAFE: over-limit
+// requests still receive valid deterministic advice, they just skip the paid
+// Claude enrichment. In-memory = soft cap on serverless (resets on cold start),
+// which is enough to blunt casual abuse; a real cap needs Vercel KV / Upstash.
+const RL_WINDOW_MS = 60_000;
+const RL_MAX = 30; // generous — a real operator makes ~1 call per weather step
+const rlHits = new Map<string, { n: number; t: number }>();
+function overRateLimit(req: Request): boolean {
+  try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const now = Date.now();
+    const rec = rlHits.get(ip);
+    if (!rec || now - rec.t > RL_WINDOW_MS) { rlHits.set(ip, { n: 1, t: now }); return false; }
+    rec.n++;
+    return rec.n > RL_MAX;
+  } catch { return false; }
+}
+
 // GET /api/weather-advice → health check. Reports whether the key is configured
 // and, with ?live=1, makes a tiny real call to confirm it actually works.
 // Never returns the key itself.
@@ -16,18 +35,18 @@ export async function GET(req: Request) {
   const live = new URL(req.url).searchParams.get("live") === "1";
   if (!present) return NextResponse.json({ keyPresent: false, model: MODEL, note: "ANTHROPIC_API_KEY לא מוגדר — היועץ עובד במצב מחושב" });
   if (!live) return NextResponse.json({ keyPresent: true, model: MODEL, note: "מפתח קיים. הוסף ?live=1 לבדיקת חיבור אמיתית" });
+  // The live check makes a real (paid) call — throttle it too.
+  if (overRateLimit(req)) return NextResponse.json({ keyPresent: true, note: "יותר מדי בקשות — נסה שוב בעוד רגע" }, { status: 429 });
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
       body: JSON.stringify({ model: MODEL, max_tokens: 16, messages: [{ role: "user", content: "reply OK" }] }),
     });
-    const ok = r.ok;
-    let detail = "";
-    if (!ok) { try { detail = JSON.stringify((await r.json())?.error ?? {}); } catch { /* noop */ } }
-    return NextResponse.json({ keyPresent: true, apiWorks: ok, status: r.status, model: MODEL, detail });
-  } catch (e: any) {
-    return NextResponse.json({ keyPresent: true, apiWorks: false, error: String(e?.message ?? e) });
+    // Return only a coarse status, never the upstream error body (info-disclosure).
+    return NextResponse.json({ keyPresent: true, apiWorks: r.ok, status: r.status, model: MODEL });
+  } catch {
+    return NextResponse.json({ keyPresent: true, apiWorks: false, note: "החיבור נכשל" });
   }
 }
 
@@ -46,6 +65,8 @@ export async function POST(req: Request) {
   const base = computeAdvice(body);
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return NextResponse.json(base); // fallback: math only
+  // Over the burst limit → still return valid advice, but don't spend on the AI call.
+  if (overRateLimit(req)) return NextResponse.json(base);
 
   try {
     const sys =
