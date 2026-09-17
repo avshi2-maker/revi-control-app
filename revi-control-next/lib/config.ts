@@ -1,5 +1,6 @@
+// config (lib/config.ts) · updated 17.09.2026 19:45 (Asia/Jerusalem)
 // App version — bump on every deploy so the footer shows what's live.
-export const APP_VERSION = "1.10.0";
+export const APP_VERSION = "1.10.1";
 
 // Legal — copyright + usage notice shown in footers across the app.
 export const COPYRIGHT = "© 2026 אבשי ספיר · Revi-Control · כל הזכויות שמורות";
