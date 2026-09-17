@@ -1,4 +1,5 @@
-import { APP_VERSION } from "@/lib/config";
+import { APP_VERSION, COPYRIGHT, LEGAL_NOTICE } from "@/lib/config";
+import FullscreenButton from "@/components/FullscreenButton";
 
 export const metadata = { title: "Revi-Control — מצגת מכר" };
 
@@ -44,6 +45,7 @@ export default function PitchPage() {
         <div className="pt-cta-top">
           <a className="pt-btn" href="/">▶ הפעל את המערכת</a>
           <a className="pt-btn ghost" href="/verification">🔍 אימות נתונים</a>
+          <FullscreenButton />
         </div>
       </section>
 
@@ -85,6 +87,8 @@ export default function PitchPage() {
           <a className="pt-btn" href="/">▶ הפעל הדגמה</a>
         </div>
         <div className="pt-contact"><b>אבשי ספיר</b> · avshi2@gmail.com · 📞 050-5231042 · Revi-Control · v{APP_VERSION}</div>
+        <div style={{ marginTop: 16, fontSize: 12, fontWeight: 700, color: "var(--muted)" }}>{COPYRIGHT}</div>
+        <div style={{ marginTop: 6, fontSize: 11, color: "var(--muted)", opacity: 0.75, maxWidth: 640, marginInline: "auto", lineHeight: 1.7 }}>{LEGAL_NOTICE}</div>
       </section>
     </div>
   );

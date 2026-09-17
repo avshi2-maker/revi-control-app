@@ -1,5 +1,12 @@
 // App version — bump on every deploy so the footer shows what's live.
-export const APP_VERSION = "1.9.0";
+export const APP_VERSION = "1.10.0";
+
+// Legal — copyright + usage notice shown in footers across the app.
+export const COPYRIGHT = "© 2026 אבשי ספיר · Revi-Control · כל הזכויות שמורות";
+export const LEGAL_NOTICE =
+  "תוכנה זו, קוד המקור, העיצוב וכל רכיביה מוגנים בזכויות יוצרים. " +
+  "אין להעתיק, לשכפל, להפיץ, לבצע הנדסה חוזרת או לעשות כל שימוש — מסחרי או אחר — " +
+  "ללא הסכם רישוי בכתב, חתום ומאושר מראש. כל הפרה תיאכף במלוא חומרת הדין.";
 
 // Single place to tweak the whole simulation.
 

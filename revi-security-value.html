@@ -1,0 +1,289 @@
+<title>Revi-Control · אבטחה וערך</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=Heebo:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --ground: #06202b;
+    --ground-2: #0a2e33;
+    --panel: #0d353a;
+    --panel-2: #103e42;
+    --line: rgba(130, 200, 200, .16);
+    --line-strong: rgba(130, 200, 200, .32);
+    --ink: #eafcf6;
+    --ink-soft: #a9d2cb;
+    --ink-mute: #6f9a98;
+    --accent: #22d3ee;
+    --emerald: #34d399;
+    --good: #34d399;
+    --warn: #f5b301;
+    --shadow: 0 18px 50px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "Heebo", "Segoe UI", system-ui, sans-serif;
+    direction: rtl; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(1100px 600px at 78% -8%, rgba(34, 211, 238, .10), transparent 60%),
+      radial-gradient(900px 520px at 12% 108%, rgba(52, 211, 153, .09), transparent 60%);
+  }
+  .page { max-width: 980px; margin: 0 auto; padding-block: 30px 56px; padding-inline: 20px; }
+
+  h1, h2, h3, .display { font-family: "Rubik", "Heebo", sans-serif; text-wrap: balance; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--accent); font-weight: 700; margin: 0 0 14px;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    position: relative; overflow: hidden; border-radius: 22px;
+    background: linear-gradient(155deg, #06202b 0%, #0a3a3f 60%, #0d5c4e 130%);
+    border: 1px solid var(--line-strong); box-shadow: var(--shadow);
+    padding: 44px 36px 40px; margin-bottom: 30px;
+  }
+  .hero .rings {
+    position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background:
+      repeating-radial-gradient(circle at 88% 12%, transparent 0 26px, rgba(34, 211, 238, .10) 26px 27px);
+    mask-image: radial-gradient(circle at 88% 12%, #000 0, transparent 62%);
+    -webkit-mask-image: radial-gradient(circle at 88% 12%, #000 0, transparent 62%);
+  }
+  .hero-top { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; position: relative; }
+  .mark {
+    width: 48px; height: 48px; border-radius: 14px; flex: none;
+    background: linear-gradient(135deg, var(--accent), var(--emerald));
+    display: grid; place-items: center; color: #06202b; font-size: 24px; font-weight: 800;
+    box-shadow: 0 6px 22px rgba(52, 211, 153, .38);
+  }
+  .mark-name { font-family: "Rubik"; font-weight: 800; font-size: 20px; letter-spacing: .3px; }
+  .mark-sub { font-size: 12px; color: var(--ink-soft); }
+  .hero h1 {
+    position: relative; font-size: clamp(30px, 6vw, 46px); line-height: 1.12;
+    margin: 0 0 16px; font-weight: 800;
+  }
+  .hero h1 .hl { color: var(--emerald); }
+  .hero p.thesis {
+    position: relative; font-size: clamp(15px, 2.4vw, 18px); color: var(--ink-soft);
+    max-width: 60ch; margin: 0 0 24px;
+  }
+  .std-badge {
+    position: relative; display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(52, 211, 153, .12); border: 1px solid rgba(52, 211, 153, .4);
+    color: #bff3e4; padding: 9px 16px; border-radius: 999px; font-size: 13.5px; font-weight: 600;
+  }
+  .std-badge b { color: #fff; }
+
+  /* ── Section ── */
+  section { margin-top: 40px; }
+  .sec-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  section h2 { font-size: clamp(21px, 3.6vw, 27px); margin: 0; font-weight: 700; }
+  .sec-sub { color: var(--ink-mute); font-size: 14px; margin: 4px 0 22px; }
+
+  /* ── Security pillars ── */
+  .pillars { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .pillar {
+    display: flex; gap: 13px; align-items: flex-start;
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--line); border-radius: 14px; padding: 17px 18px;
+  }
+  .pillar .chk {
+    flex: none; width: 30px; height: 30px; border-radius: 9px;
+    background: rgba(52, 211, 153, .16); color: var(--good);
+    display: grid; place-items: center; font-size: 16px; font-weight: 800;
+    border: 1px solid rgba(52, 211, 153, .38);
+  }
+  .pillar .ptxt b { display: block; font-size: 15.5px; font-weight: 700; margin-bottom: 2px; color: #fff; }
+  .pillar .ptxt span { font-size: 13.5px; color: var(--ink-soft); }
+
+  .roadmap {
+    margin-top: 16px; display: flex; gap: 13px; align-items: flex-start;
+    background: rgba(245, 179, 1, .07); border: 1px solid rgba(245, 179, 1, .3);
+    border-radius: 14px; padding: 16px 18px;
+  }
+  .roadmap .ic { flex: none; font-size: 18px; }
+  .roadmap b { color: var(--warn); }
+  .roadmap span { color: var(--ink-soft); font-size: 14px; }
+
+  /* ── Value comparison ── */
+  .compare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: stretch; }
+  .vcard {
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--line); border-radius: 16px; padding: 22px 20px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .vcard .vlabel { font-size: 13px; color: var(--ink-mute); font-weight: 600; letter-spacing: .3px; }
+  .vcard .vfig {
+    font-family: "Rubik"; font-weight: 800; font-size: clamp(22px, 3.4vw, 28px);
+    color: #fff; font-variant-numeric: tabular-nums; line-height: 1.15;
+  }
+  .vcard .vnote { font-size: 13.5px; color: var(--ink-soft); margin-top: 2px; }
+  .vcard.spot {
+    background: linear-gradient(165deg, #0d5c4e, #0a3a3f);
+    border: 1px solid rgba(52, 211, 153, .5); box-shadow: 0 10px 34px rgba(13, 92, 78, .5);
+  }
+  .vcard.spot .vlabel { color: #8ff0d8; }
+  .vcard.spot .vfig { color: #eafff8; }
+  .vcard.spot .vnote { color: #c7f2e6; }
+  .vcard .tag {
+    align-self: flex-start; margin-top: auto; padding-top: 12px;
+    font-size: 12px; color: var(--accent); font-weight: 700;
+  }
+  .vcard.spot .tag { color: var(--emerald); }
+
+  .anchor {
+    margin-top: 18px; background: var(--ground-2); border: 1px solid var(--line);
+    border-right: 4px solid var(--emerald); border-radius: 12px; padding: 16px 20px;
+    font-size: 15.5px; color: var(--ink);
+  }
+  .anchor b { color: var(--emerald); }
+
+  .diff { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .chip {
+    background: rgba(34, 211, 238, .08); border: 1px solid rgba(34, 211, 238, .28);
+    color: #bdeef6; border-radius: 999px; padding: 8px 15px; font-size: 13.5px; font-weight: 600;
+  }
+
+  /* ── Footer / contact ── */
+  .contact {
+    margin-top: 44px; text-align: center;
+    background: linear-gradient(135deg, #06202b, #0d5c4e);
+    border: 1px solid var(--line-strong); border-radius: 18px; padding: 30px 26px;
+  }
+  .contact b.big { font-family: "Rubik"; font-size: 20px; display: block; margin-bottom: 6px; color: #fff; }
+  .contact .row { color: #a9e6d8; font-size: 15px; display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: center; }
+  .contact .row span { white-space: nowrap; }
+  .foot-note { text-align: center; color: var(--ink-mute); font-size: 12px; margin-top: 18px; }
+  .legal {
+    text-align: center; color: var(--ink-mute); font-size: 11px; line-height: 1.7;
+    max-width: 640px; margin: 10px auto 0; opacity: .8;
+  }
+
+  @media (max-width: 640px) {
+    .pillars { grid-template-columns: 1fr; }
+    .compare { grid-template-columns: 1fr; }
+    .hero { padding: 34px 22px 30px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero, section, .contact { animation: rise .6s cubic-bezier(.2, .7, .3, 1) both; }
+    section:nth-of-type(2) { animation-delay: .06s; }
+    .contact { animation-delay: .1s; }
+    @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  }
+</style>
+
+<div class="page">
+
+  <!-- ── Hero ── -->
+  <div class="hero">
+    <div class="rings"></div>
+    <div class="hero-top">
+      <div class="mark">◈</div>
+      <div>
+        <div class="mark-name">Revi-Control</div>
+        <div class="mark-sub">מרכז שליטה לצי ריסוס אוטונומי</div>
+      </div>
+    </div>
+    <p class="eyebrow">אבטחה וערך · מסמך ללקוחות ומשקיעים</p>
+    <h1>מערכת שנבנתה עם <span class="hl">אבטחה, שקיפות וערך</span> מוכח.</h1>
+    <p class="thesis">
+      לא רק תוכנה שעובדת — תוכנה שנבדקה מול תקן האבטחה הבינלאומי המוביל, מוקשחה בהתאם,
+      ומספקת יכולת שבנייתה מאפס עולה רבע מיליון דולר ושנה של פיתוח.
+    </p>
+    <div class="std-badge">🛡 נבדק מול <b>OWASP Top 10:2025</b> · התקן הבינלאומי העדכני</div>
+  </div>
+
+  <!-- ── Security ── -->
+  <section>
+    <div class="sec-head"><h2>עמידות ואבטחה</h2></div>
+    <p class="sec-sub">הגנות הליבה מיושמות ופעילות במערכת החיה. סקירה מלאה בוצעה מול עשר קטגוריות הסיכון של OWASP 2025.</p>
+    <div class="pillars">
+      <div class="pillar">
+        <div class="chk">✓</div>
+        <div class="ptxt"><b>תעבורה מוצפנת מקצה לקצה</b><span>כל התקשורת ב-HTTPS עם אכיפת HSTS — אין מעבר מידע גלוי.</span></div>
+      </div>
+      <div class="pillar">
+        <div class="chk">✓</div>
+        <div class="ptxt"><b>כותרות אבטחה מלאות</b><span>מדיניות CSP והגנה מפני clickjacking והזרקת תוכן זדוני.</span></div>
+      </div>
+      <div class="pillar">
+        <div class="chk">✓</div>
+        <div class="ptxt"><b>ללא איסוף מידע אישי</b><span>אין סיסמאות או נתונים אישיים; מפתחות רגישים שמורים בצד השרת בלבד.</span></div>
+      </div>
+      <div class="pillar">
+        <div class="chk">✓</div>
+        <div class="ptxt"><b>הגנה מפני שימוש לרעה</b><span>הגבלת-קצב על ממשק ה-AI — שומרת על יציבות ועל עלות מבוקרת.</span></div>
+      </div>
+      <div class="pillar">
+        <div class="chk">✓</div>
+        <div class="ptxt"><b>טיפול-חריגות עמיד</b><span>המערכת נכשלת בבטחה לתוצאה מחושבת — ללא קריסה וללא חשיפת מידע פנימי.</span></div>
+      </div>
+      <div class="pillar">
+        <div class="chk">✓</div>
+        <div class="ptxt"><b>תשתית מודרנית ומתוחזקת</b><span>בנויה על Next.js ו-Vercel · תלויות מנוהלות ומעודכנות.</span></div>
+      </div>
+    </div>
+    <div class="roadmap">
+      <div class="ic">🔧</div>
+      <div>
+        <b>מסלול חיזוק לפריסה תפעולית:</b>
+        <span> הזדהות משתמשים, ניטור והתראות בזמן אמת, וגיבוי בענן — מתוכננים, מתומחרים, ומופעלים לפני חיבור לחומרה אמיתית.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Value ── -->
+  <section>
+    <div class="sec-head"><h2>הערך</h2></div>
+    <p class="sec-sub">מה עולה להשיג יכולת שקולה — ומדוע Revi-Control היא הבחירה החכמה.</p>
+    <div class="compare">
+      <div class="vcard">
+        <div class="vlabel">לבנות מאפס בארה״ב</div>
+        <div class="vfig">‎$250,000+</div>
+        <div class="vnote">מערכת ברמת ייצור · 6–12 חודשי פיתוח · צוות מהנדסים.</div>
+        <div class="tag">עלות ההזדמנות</div>
+      </div>
+      <div class="vcard">
+        <div class="vlabel">כלי SaaS דומה</div>
+        <div class="vfig">‎$4,000+<span style="font-size:15px;font-weight:600"> / שנה</span></div>
+        <div class="vnote">למושב · ממוקד מיפוי — ללא החלטת GO/NO-GO בזמן אמת.</div>
+        <div class="tag">מנוי מתמשך</div>
+      </div>
+      <div class="vcard spot">
+        <div class="vlabel">Revi-Control</div>
+        <div class="vfig">מוכן · עכשיו</div>
+        <div class="vnote">בעברית מלאה · בענן · ללא התקנה · נגיש מיידית מכל דפדפן.</div>
+        <div class="tag">✓ זמין להדגמה חיה</div>
+      </div>
+    </div>
+    <div class="anchor">
+      לבנות מערכת שקולה מאפס — <b>רבע מיליון דולר ושנה שלמה</b>. Revi-Control קיימת, פועלת, ומדגימה את היכולת כבר היום.
+    </div>
+    <div class="diff">
+      <span class="chip">🤖 החלטת טיסה בזמן אמת (AI)</span>
+      <span class="chip">🌬 דפוס טיסה נגד סחף</span>
+      <span class="chip">📍 בקרת בטיחות מפעיל</span>
+      <span class="chip">🔍 שקיפות נתונים מלאה</span>
+      <span class="chip">⚖️ בקרות משקל, סוללה וטווח</span>
+    </div>
+  </section>
+
+  <!-- ── Contact ── -->
+  <div class="contact">
+    <b class="big">מוכנים לראות בפעולה?</b>
+    <div class="row">
+      <span><b>אבשי ספיר</b></span>
+      <span>✉ avshi2@gmail.com</span>
+      <span>📞 050-5231042</span>
+    </div>
+  </div>
+  <div class="foot-note">Revi-Control · גרסה 1.10.0 · נבדק מול OWASP Top 10:2025 · ספטמבר 2026</div>
+  <div class="legal">
+    © 2026 אבשי ספיר · Revi-Control · כל הזכויות שמורות.<br>
+    תוכנה זו וכל רכיביה מוגנים בזכויות יוצרים. אין להעתיק, לשכפל, להפיץ או לעשות בה כל שימוש — מסחרי או אחר —
+    ללא הסכם רישוי בכתב, חתום ומאושר מראש. כל הפרה תיאכף במלוא חומרת הדין.
+  </div>
+
+</div>

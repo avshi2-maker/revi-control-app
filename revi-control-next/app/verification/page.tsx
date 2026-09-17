@@ -1,4 +1,4 @@
-import { DRONE_SPEC as S, MAX_ZONE_DUNAM } from "@/lib/config";
+import { DRONE_SPEC as S, MAX_ZONE_DUNAM, COPYRIGHT, LEGAL_NOTICE } from "@/lib/config";
 
 export const metadata = { title: "אימות נתונים — Revi-Control" };
 
@@ -84,8 +84,13 @@ export default function VerificationPage() {
           <ul className="dv-list">{upgrade.map((u, i) => <li key={i}>{u}</li>)}</ul>
           <div className="dv-cta">
             <b>מוכנים לשדרג?</b>
-            <span>אבשי ספיר · avshi2@gmail.com · להדגמה חיה ולשיחת התאמה</span>
+            <span>אבשי ספיר · avshi2@gmail.com · 📞 050-5231042 · להדגמה חיה ולשיחת התאמה</span>
           </div>
+        </div>
+
+        <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid rgba(120,190,220,.2)", textAlign: "center" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted, #7f9bb8)" }}>{COPYRIGHT}</div>
+          <div style={{ marginTop: 6, fontSize: 11, color: "var(--muted, #7f9bb8)", opacity: 0.75, maxWidth: 640, marginInline: "auto", lineHeight: 1.7 }}>{LEGAL_NOTICE}</div>
         </div>
       </div>
     </div>
